@@ -3,44 +3,30 @@
 # Multi-stage build for NestJS
 # ──────────────────────────────────────
 
-# Stage 1: Dependencies
-FROM node:20-alpine AS deps
-RUN apk add --no-cache libc6-compat openssl
-WORKDIR /app
-
-RUN corepack enable && corepack prepare pnpm@9 --activate
-
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
-COPY packages/shared/package.json ./packages/shared/
-COPY packages/database/package.json ./packages/database/
-COPY apps/api/package.json ./apps/api/
-
-ENV NODE_ENV=development
-RUN pnpm install --frozen-lockfile
-
-# Stage 2: Build
+# Stage 1: Build
 FROM node:20-alpine AS builder
-RUN apk add --no-cache openssl
+RUN apk add --no-cache libc6-compat openssl
 RUN corepack enable && corepack prepare pnpm@9 --activate
 WORKDIR /app
 
-COPY --from=deps /app/node_modules ./node_modules
+# Copy everything needed
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.base.json ./
+COPY packages/shared/ ./packages/shared/
+COPY packages/database/ ./packages/database/
+COPY apps/api/ ./apps/api/
 
-# Copy source
-COPY packages/shared ./packages/shared
-COPY packages/database ./packages/database
-COPY apps/api ./apps/api
-COPY tsconfig.base.json ./
+# Install all deps (including dev for prisma CLI + nest CLI)
+RUN pnpm install --frozen-lockfile
 
 # Generate Prisma Client
 WORKDIR /app/packages/database
-RUN /app/node_modules/.bin/prisma generate
+RUN pnpm exec prisma generate
 
 # Build API
 WORKDIR /app/apps/api
 RUN pnpm build
 
-# Stage 3: Production
+# Stage 2: Production
 FROM node:20-alpine AS runner
 RUN apk add --no-cache openssl
 WORKDIR /app

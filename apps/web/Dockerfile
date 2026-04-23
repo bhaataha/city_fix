@@ -3,37 +3,23 @@
 # Multi-stage build for Next.js 15
 # ──────────────────────────────────────
 
-# Stage 1: Dependencies
-FROM node:20-alpine AS deps
-RUN apk add --no-cache libc6-compat
-WORKDIR /app
-
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@9 --activate
-
-# Copy workspace manifests
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
-COPY packages/shared/package.json ./packages/shared/
-COPY apps/web/package.json ./apps/web/
-
-ENV NODE_ENV=development
-RUN pnpm install --frozen-lockfile
-
-# Stage 2: Build
+# Stage 1: Build
 FROM node:20-alpine AS builder
+RUN apk add --no-cache libc6-compat
 RUN corepack enable && corepack prepare pnpm@9 --activate
 WORKDIR /app
 
-COPY --from=deps /app/node_modules ./node_modules
+# Copy everything needed
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.base.json ./
+COPY packages/shared/ ./packages/shared/
+COPY apps/web/ ./apps/web/
 
-# Copy source
-COPY packages/shared ./packages/shared
-COPY apps/web ./apps/web
-COPY tsconfig.base.json ./
+# Install all deps
+RUN pnpm install --frozen-lockfile
 
 # Build shared package first
 WORKDIR /app/packages/shared
-RUN npx tsc --declaration || true
+RUN pnpm exec tsc --declaration || true
 
 # Build Next.js
 WORKDIR /app/apps/web
@@ -45,7 +31,7 @@ ENV NEXT_PUBLIC_MAPBOX_TOKEN=${NEXT_PUBLIC_MAPBOX_TOKEN}
 
 RUN pnpm build
 
-# Stage 3: Production
+# Stage 2: Production
 FROM node:20-alpine AS runner
 WORKDIR /app
 
