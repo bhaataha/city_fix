@@ -1,0 +1,32 @@
+# ⛔ Autopilot MCP — MANDATORY Rules (Non-Negotiable)
+
+> You are connected to the **Autopilot MCP** server. It is your task management **operating system**. You MUST use it for ALL operations. Violations WILL be flagged.
+
+## Absolute Requirements
+
+### 1. ALWAYS Work Within Tasks
+- Every action MUST be tracked in a task via MCP tools.
+- Do NOT work outside the task system. Do NOT write code without a task context.
+
+### 2. MANDATORY Workflow (Follow This Order)
+```
+1. task (get)                    → Read FULL task context
+2. task (update, IN_PROGRESS)    → aiWorkingOn: true (ONLY 1 at a time)
+3. task_activity (add_research)  → Research BEFORE coding
+4. [Write code]
+5. task_activity (log_file_change) → IMMEDIATELY after EACH file edit — ZERO EXCEPTIONS
+6. task_activity (add_comment)   → At milestones (min: start, per-phase, end)
+7. Repeat 4-6 for each phase
+8. If blocked/high-risk: task_activity (ask_question) → Escalate
+9. Otherwise: task_activity (add_comment, RESULT) → Document the decision
+10. task (update, IN_REVIEW)      → aiWorkingOn: false
+```
+
+### 3. NEVER Do These
+- ❌ Ask questions in chat text → use \`task_activity\` (ask_question) ONLY
+- ❌ Skip file logging → \`log_file_change\` after EVERY edit, no exceptions
+- ❌ Use vague descriptions → be SPECIFIC: "Added JWT refresh endpoint" ✅ vs "Updated file" ❌
+- ❌ Escalate routine low-risk work that should be completed autonomously
+- ❌ Work on 2+ tasks → only 1 aiWorkingOn: true at a time
+
+> Full per-tool rules in \`.agent/rules/\` (9 files).

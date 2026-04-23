@@ -1,0 +1,128 @@
+# ==============================================
+# CityFix — Production Docker Compose
+# ==============================================
+# Usage:
+#   docker compose -f docker-compose.prod.yml up -d --build
+# ==============================================
+
+services:
+  # ─── PostgreSQL + PostGIS ────────────────────
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: cityfix-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cityfix}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cityfix_prod_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-cityfix}
+    ports:
+      - "5488:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cityfix}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis ───────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: cityfix-redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-cityfix_redis}
+    ports:
+      - "6388:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-cityfix_redis}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── MinIO (S3-compatible file storage) ──────
+  minio:
+    image: minio/minio:latest
+    container_name: cityfix-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-cityfix_minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-cityfix_minio_secret}
+    ports:
+      - "9088:9000"
+      - "9089:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ─── NestJS API ──────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: cityfix-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4100
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cityfix}:${POSTGRES_PASSWORD:-cityfix_prod_secret}@postgres:5432/${POSTGRES_DB:-cityfix}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-7d}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-cityfix_redis}
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-cityfix_minio}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-cityfix_minio_secret}
+      MINIO_BUCKET: ${MINIO_BUCKET:-cityfix-uploads}
+    ports:
+      - "4188:4100"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4100/api/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ─── Next.js Web ─────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://api:4100/api}
+        NEXT_PUBLIC_MAPBOX_TOKEN: ${NEXT_PUBLIC_MAPBOX_TOKEN:-}
+    container_name: cityfix-web
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3101
+      HOSTNAME: "0.0.0.0"
+    ports:
+      - "3188:3101"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3101/ || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:

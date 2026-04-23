@@ -1,0 +1,562 @@
+// ============================================================
+// CityFix — Complete Prisma Schema
+// Multi-Tenant Municipal Issue Reporting Platform
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMS ───────────────────────────────────────────────
+
+enum UserRole {
+  RESIDENT
+  CALL_CENTER
+  DEPT_MANAGER
+  FIELD_WORKER
+  LEGAL
+  INSURANCE
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum IssueStatus {
+  NEW
+  PENDING_VERIFICATION
+  ASSIGNED
+  IN_PROGRESS
+  INSPECTION_SCHEDULED
+  WAITING_CONTRACTOR
+  RESOLVED
+  CLOSED
+  REJECTED
+  NOT_RESPONSIBLE
+  DUPLICATE
+}
+
+enum Urgency {
+  LOW
+  NORMAL
+  HIGH
+  CRITICAL
+}
+
+enum WorkOrderStatus {
+  PENDING
+  ASSIGNED
+  EN_ROUTE
+  ON_SITE
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ClaimStatus {
+  NEW
+  AWAITING_DOCUMENTS
+  UNDER_REVIEW
+  ENGINEERING_REVIEW
+  LEGAL_REVIEW
+  INSURANCE_REVIEW
+  NEEDS_COMPLETION
+  IN_NEGOTIATION
+  PARTIALLY_APPROVED
+  APPROVED
+  REJECTED
+  CLOSED
+}
+
+enum ClaimType {
+  PROPERTY_DAMAGE
+  VEHICLE_DAMAGE
+  PERSONAL_INJURY
+  INCOME_LOSS
+  THIRD_PARTY
+  INSURANCE_REIMBURSEMENT
+}
+
+enum NotificationType {
+  PUSH
+  EMAIL
+  SMS
+  IN_APP
+}
+
+enum AttachmentType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+  INVOICE
+  REPORT
+}
+
+// ─── TENANT & ORGANIZATION ──────────────────────────────
+
+model Tenant {
+  id             String   @id @default(cuid())
+  name           String   // Municipality name (e.g., "עיריית תל אביב")
+  slug           String   @unique // URL slug ("tel-aviv")
+  logo           String?  // Logo URL
+  primaryColor   String   @default("#2563EB")
+  secondaryColor String   @default("#1E40AF")
+  locale         String   @default("he")
+  timezone       String   @default("Asia/Jerusalem")
+  contactEmail   String?
+  contactPhone   String?
+  website        String?
+  address        String?
+  population     Int?
+  isActive       Boolean  @default(true)
+  slaConfig      Json?    // SLA rules per category { "POTHOLE": { "response": 4, "resolution": 48 } }
+  settings       Json?    // Additional tenant settings
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  users          User[]
+  departments    Department[]
+  categories     ServiceCategory[]
+  issues         IssueReport[]
+  claims         ClaimCase[]
+  workOrders     WorkOrder[]
+  geoZones       GeoZone[]
+  notifications  Notification[]
+  auditLogs      AuditLog[]
+  assets         Asset[]
+
+  @@map("tenants")
+}
+
+model User {
+  id             String   @id @default(cuid())
+  tenantId       String
+  email          String
+  phone          String?
+  firstName      String
+  lastName       String
+  role           UserRole @default(RESIDENT)
+  passwordHash   String?
+  avatarUrl      String?
+  isActive       Boolean  @default(true)
+  lastLoginAt    DateTime?
+  preferredLang  String   @default("he")
+  fcmToken       String?  // Firebase Cloud Messaging token
+  addresses      Json?    // Saved addresses
+  vehicles       Json?    // Registered vehicles [{ plate, make, model }]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  reportedIssues IssueReport[] @relation("Reporter")
+  assignedIssues IssueReport[] @relation("AssignedUser")
+  assignedOrders WorkOrder[]   @relation("AssignedWorker")
+  comments       IssueComment[]
+  claimsFiled    ClaimCase[]   @relation("Claimant")
+  claimsAssigned ClaimCase[]   @relation("ClaimHandler")
+  notifications  Notification[]
+  department     Department?   @relation("DeptMembers", fields: [departmentId], references: [id])
+  departmentId   String?
+  managedDept    Department?   @relation("DeptManager")
+  auditLogs      AuditLog[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([role])
+  @@map("users")
+}
+
+// ─── DEPARTMENTS & TEAMS ────────────────────────────────
+
+model Department {
+  id             String   @id @default(cuid())
+  tenantId       String
+  name           String   // "מחלקת חשמל", "מחלקת כבישים"
+  description    String?
+  color          String?  // For map visualization
+  icon           String?
+  isActive       Boolean  @default(true)
+  slaOverride    Json?    // Department-level SLA overrides
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  members        User[]   @relation("DeptMembers")
+  manager        User?    @relation("DeptManager", fields: [managerId], references: [id])
+  managerId      String?  @unique
+  categories     ServiceCategory[]
+  issues         IssueReport[]
+  geoZones       GeoZone[]
+  contractors    Contractor[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("departments")
+}
+
+model Contractor {
+  id             String   @id @default(cuid())
+  tenantId       String
+  name           String
+  contactName    String?
+  phone          String?
+  email          String?
+  specialization String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  departments    Department[]
+  workOrders     WorkOrder[]
+
+  @@index([tenantId])
+  @@map("contractors")
+}
+
+// ─── SERVICE CATEGORIES ─────────────────────────────────
+
+model ServiceCategory {
+  id             String   @id @default(cuid())
+  tenantId       String
+  name           String   // "בור בכביש", "פנס רחוב תקול"
+  nameAr         String?  // Arabic name
+  nameEn         String?  // English name
+  icon           String?  // Icon name
+  color          String?  // Category color
+  parentId       String?  // For subcategories
+  departmentId   String?  // Default department routing
+  slaHours       Int?     // SLA in hours for this category
+  sortOrder      Int      @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  parent         ServiceCategory?  @relation("SubCategories", fields: [parentId], references: [id])
+  children       ServiceCategory[] @relation("SubCategories")
+  department     Department?       @relation(fields: [departmentId], references: [id])
+  issues         IssueReport[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("service_categories")
+}
+
+// ─── ISSUE REPORTS ──────────────────────────────────────
+
+model IssueReport {
+  id               String      @id @default(cuid())
+  tenantId         String
+  reportNumber     String      // Auto-generated: CF-2026-00001
+  categoryId       String
+  subcategory      String?
+  description      String
+  address          String?     // Human-readable address
+  latitude         Float
+  longitude        Float
+  urgency          Urgency     @default(NORMAL)
+  isImmediateDanger Boolean    @default(false)
+  status           IssueStatus @default(NEW)
+  isAnonymous      Boolean     @default(false)
+  reporterId       String?
+  assignedDeptId   String?
+  assignedUserId   String?
+  resolvedAt       DateTime?
+  closedAt         DateTime?
+  slaDeadline      DateTime?   // Calculated based on category SLA
+  slaBreached      Boolean     @default(false)
+  duplicateOfId    String?     // If marked as duplicate
+  mergedIntoId     String?
+  viewCount        Int         @default(0)
+  upvoteCount      Int         @default(0)
+  eventDate        DateTime?   // When the issue was first noticed
+  metadata         Json?       // Additional flexible data
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  // Relations
+  tenant           Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category         ServiceCategory @relation(fields: [categoryId], references: [id])
+  reporter         User?           @relation("Reporter", fields: [reporterId], references: [id])
+  assignedDept     Department?     @relation(fields: [assignedDeptId], references: [id])
+  assignedUser     User?           @relation("AssignedUser", fields: [assignedUserId], references: [id])
+  duplicateOf      IssueReport?    @relation("Duplicates", fields: [duplicateOfId], references: [id])
+  duplicates       IssueReport[]   @relation("Duplicates")
+  attachments      IssueAttachment[]
+  comments         IssueComment[]
+  statusHistory    IssueStatusHistory[]
+  workOrders       WorkOrder[]
+  claims           ClaimCase[]
+
+  @@unique([tenantId, reportNumber])
+  @@index([tenantId, status])
+  @@index([tenantId, categoryId])
+  @@index([tenantId, createdAt])
+  @@index([latitude, longitude])
+  @@map("issue_reports")
+}
+
+model IssueAttachment {
+  id             String         @id @default(cuid())
+  issueId        String
+  fileName       String
+  fileUrl        String
+  fileSize       Int?
+  mimeType       String?
+  type           AttachmentType @default(IMAGE)
+  caption        String?
+  uploadedById   String?
+  createdAt      DateTime       @default(now())
+
+  // Relations
+  issue          IssueReport @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@index([issueId])
+  @@map("issue_attachments")
+}
+
+model IssueComment {
+  id             String   @id @default(cuid())
+  issueId        String
+  authorId       String
+  content        String
+  isInternal     Boolean  @default(false) // Internal staff comments
+  isSystemNote   Boolean  @default(false) // Auto-generated system notes
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  issue          IssueReport @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  author         User        @relation(fields: [authorId], references: [id])
+
+  @@index([issueId])
+  @@map("issue_comments")
+}
+
+model IssueStatusHistory {
+  id             String      @id @default(cuid())
+  issueId        String
+  fromStatus     IssueStatus?
+  toStatus       IssueStatus
+  changedById    String?
+  reason         String?
+  metadata       Json?
+  createdAt      DateTime    @default(now())
+
+  // Relations
+  issue          IssueReport @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@index([issueId])
+  @@map("issue_status_history")
+}
+
+// ─── WORK ORDERS ────────────────────────────────────────
+
+model WorkOrder {
+  id                String          @id @default(cuid())
+  tenantId          String
+  orderNumber       String          // Auto-generated: WO-2026-00001
+  issueId           String
+  assignedToId      String?         // Field worker
+  contractorId      String?
+  status            WorkOrderStatus @default(PENDING)
+  priority          Urgency         @default(NORMAL)
+  instructions      String?
+  notes             String?
+  estimatedDuration Int?            // In minutes
+  actualDuration    Int?
+  estimatedCost     Float?
+  actualCost        Float?
+  beforePhotos      Json?           // Array of URLs
+  afterPhotos       Json?           // Array of URLs
+  scheduledAt       DateTime?
+  startedAt         DateTime?
+  completedAt       DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  // Relations
+  tenant            Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  issue             IssueReport @relation(fields: [issueId], references: [id])
+  assignedTo        User?       @relation("AssignedWorker", fields: [assignedToId], references: [id])
+  contractor        Contractor? @relation(fields: [contractorId], references: [id])
+
+  @@unique([tenantId, orderNumber])
+  @@index([tenantId, status])
+  @@map("work_orders")
+}
+
+// ─── CLAIMS ─────────────────────────────────────────────
+
+model ClaimCase {
+  id              String      @id @default(cuid())
+  tenantId        String
+  claimNumber     String      // Auto-generated: CL-2026-00001
+  claimType       ClaimType
+  status          ClaimStatus @default(NEW)
+  claimantId      String
+  handlerId       String?     // Legal / insurance officer
+  relatedIssueId  String?     // Link to original issue report
+  eventDate       DateTime
+  eventDescription String
+  eventAddress    String?
+  latitude        Float?
+  longitude       Float?
+  vehiclePlate    String?
+  policyNumber    String?
+  claimedAmount   Float?
+  approvedAmount  Float?
+  decision        String?     // Final decision text
+  decisionDate    DateTime?
+  witnessInfo     String?
+  legalNotes      String?     @db.Text
+  metadata        Json?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Relations
+  tenant          Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  claimant        User         @relation("Claimant", fields: [claimantId], references: [id])
+  handler         User?        @relation("ClaimHandler", fields: [handlerId], references: [id])
+  relatedIssue    IssueReport? @relation(fields: [relatedIssueId], references: [id])
+  documents       ClaimDocument[]
+  decisions       ClaimDecision[]
+
+  @@unique([tenantId, claimNumber])
+  @@index([tenantId, status])
+  @@map("claim_cases")
+}
+
+model ClaimDocument {
+  id             String         @id @default(cuid())
+  claimId        String
+  fileName       String
+  fileUrl        String
+  fileSize       Int?
+  mimeType       String?
+  type           AttachmentType @default(DOCUMENT)
+  description    String?
+  uploadedById   String?
+  createdAt      DateTime       @default(now())
+
+  // Relations
+  claim          ClaimCase @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
+  @@index([claimId])
+  @@map("claim_documents")
+}
+
+model ClaimDecision {
+  id             String   @id @default(cuid())
+  claimId        String
+  decision       String   // APPROVED, REJECTED, PARTIAL, SETTLEMENT
+  amount         Float?
+  reasoning      String?  @db.Text
+  decidedById    String?
+  createdAt      DateTime @default(now())
+
+  // Relations
+  claim          ClaimCase @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
+  @@index([claimId])
+  @@map("claim_decisions")
+}
+
+// ─── GIS & ASSETS ───────────────────────────────────────
+
+model GeoZone {
+  id             String   @id @default(cuid())
+  tenantId       String
+  name           String   // "שכונת פלורנטין", "אזור צפון"
+  type           String   // "neighborhood", "responsibility_area", "district"
+  boundary       Json     // GeoJSON polygon
+  departmentId   String?  // Responsible department
+  metadata       Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  tenant         Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  department     Department? @relation(fields: [departmentId], references: [id])
+
+  @@index([tenantId])
+  @@map("geo_zones")
+}
+
+model Asset {
+  id             String   @id @default(cuid())
+  tenantId       String
+  assetType      String   // "streetlight", "drain", "bench", "camera", "road"
+  assetId        String?  // External asset ID
+  name           String?
+  latitude       Float
+  longitude      Float
+  address        String?
+  status         String?  // "active", "broken", "maintenance"
+  metadata       Json?    // Type-specific data
+  installedAt    DateTime?
+  lastServiceAt  DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  tenant         Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, assetType])
+  @@index([latitude, longitude])
+  @@map("assets")
+}
+
+// ─── NOTIFICATIONS ──────────────────────────────────────
+
+model Notification {
+  id             String           @id @default(cuid())
+  tenantId       String
+  userId         String
+  type           NotificationType @default(IN_APP)
+  title          String
+  body           String
+  data           Json?            // { issueId, claimId, etc. }
+  isRead         Boolean          @default(false)
+  sentAt         DateTime         @default(now())
+  readAt         DateTime?
+
+  // Relations
+  tenant         Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user           User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, userId, isRead])
+  @@map("notifications")
+}
+
+// ─── AUDIT LOG ──────────────────────────────────────────
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  tenantId       String
+  userId         String?
+  action         String   // "ISSUE_CREATED", "STATUS_CHANGED", etc.
+  entityType     String   // "IssueReport", "ClaimCase", etc.
+  entityId       String
+  oldValues      Json?
+  newValues      Json?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  // Relations
+  tenant         Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user           User?  @relation(fields: [userId], references: [id])
+
+  @@index([tenantId, entityType, entityId])
+  @@index([tenantId, createdAt])
+  @@map("audit_logs")
+}
