@@ -42,12 +42,13 @@ ENV PORT=3101
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy build output
+# Copy build output — in a monorepo, standalone puts server.js under apps/web/
 COPY --from=builder /app/apps/web/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 
 USER nextjs
 EXPOSE 3101
 
-CMD ["node", "server.js"]
+# In a pnpm monorepo, Next.js standalone server.js lives at apps/web/server.js
+CMD ["node", "apps/web/server.js"]
