@@ -40,7 +40,6 @@ RUN adduser --system --uid 1001 nestjs
 # Copy built output and node_modules
 COPY --from=builder /app/apps/api/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/packages/database/prisma ./prisma
 
 USER nestjs
