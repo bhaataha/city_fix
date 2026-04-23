@@ -59,7 +59,7 @@ export const api = {
   },
   getIssue: (tenant: string, id: string) =>
     apiFetch(`${tenant}/issues/${id}`),
-  createIssue: (tenant: string, data: any, token: string) =>
+  createIssue: (tenant: string, data: any, token?: string) =>
     apiFetch(`${tenant}/issues`, { method: 'POST', body: JSON.stringify(data), token }),
   updateIssueStatus: (tenant: string, id: string, data: any, token: string) =>
     apiFetch(`${tenant}/issues/${id}/status`, { method: 'PATCH', body: JSON.stringify(data), token }),

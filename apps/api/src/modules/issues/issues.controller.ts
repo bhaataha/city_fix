@@ -125,7 +125,7 @@ export class IssuesController {
   // ─── Authenticated Endpoints ──────────────────────────
 
   @Post()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new issue report' })
   async create(
@@ -135,7 +135,7 @@ export class IssuesController {
   ) {
     const result = await this.issuesService.create(tenantId, {
       ...dto,
-      reporterId: user.id,
+      reporterId: user?.id,
     });
     return { success: true, data: result };
   }

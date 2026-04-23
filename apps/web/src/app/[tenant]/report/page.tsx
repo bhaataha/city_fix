@@ -9,6 +9,8 @@ import {
   CheckCircle2, ChevronLeft, X, Loader2, Send, Info
 } from 'lucide-react';
 import { DEFAULT_CATEGORIES, URGENCY_LABELS } from '@cityfix/shared';
+import { api } from '@/lib/api';
+import { useAuthStore } from '@/lib/store';
 
 const MapView = dynamic(() => import('@/components/MapView'), {
   ssr: false,
@@ -37,6 +39,9 @@ export default function ReportPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  const { accessToken } = useAuthStore();
+  const [reportNumber, setReportNumber] = useState<string | null>(null);
+
   const steps: { key: Step; label: string }[] = [
     { key: 'category', label: 'סוג מפגע' },
     { key: 'location', label: 'מיקום' },
@@ -48,11 +53,39 @@ export default function ReportPage() {
   const category = DEFAULT_CATEGORIES.find((c) => c.name === selectedCategory);
 
   const handleSubmit = async () => {
+    if (!category) return;
     setSubmitting(true);
-    // Simulate submission
-    await new Promise((r) => setTimeout(r, 2000));
-    setSubmitting(false);
-    setSubmitted(true);
+    
+    // Parse coordinates from picker or use generic center if empty
+    const lat = pickerPin?.lat || 32.0853;
+    const lng = pickerPin?.lng || 34.7818;
+
+    const payload = {
+      categoryId: selectedCategory || category.name,
+      description,
+      address,
+      latitude: lat,
+      longitude: lng,
+      urgency,
+      isImmediateDanger: isDanger,
+      isAnonymous,
+    };
+
+    try {
+      // @ts-ignore
+      const res = await api.createIssue(tenant as string, payload, accessToken || undefined);
+      
+      if (res.success) {
+        setReportNumber(res.data?.issue?.reportNumber || 'CF-XXXX-XXXXX');
+        setSubmitted(true);
+      } else {
+        alert(`שגיאה ביצירת הפנייה: ${res.error}`);
+      }
+    } catch (e) {
+      alert('שגיאת תקשורת');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -75,7 +108,7 @@ export default function ReportPage() {
             className="text-2xl font-bold mb-6 py-3 px-6 rounded-xl inline-block"
             style={{ background: 'var(--color-surface-2)', color: '#818CF8' }}
           >
-            CF-2026-00313
+            {reportNumber}
           </div>
           <p className="text-sm mb-8" style={{ color: 'var(--color-text-muted)' }}>
             נעדכן אותך בכל שינוי סטטוס דרך הודעה באפליקציה
