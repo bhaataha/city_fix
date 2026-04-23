@@ -15,6 +15,7 @@ COPY packages/shared/package.json ./packages/shared/
 COPY packages/database/package.json ./packages/database/
 COPY apps/api/package.json ./apps/api/
 
+ENV NODE_ENV=development
 RUN pnpm install --frozen-lockfile
 
 # Stage 2: Build
@@ -33,7 +34,7 @@ COPY tsconfig.base.json ./
 
 # Generate Prisma Client
 WORKDIR /app/packages/database
-RUN npx prisma generate
+RUN /app/node_modules/.bin/prisma generate
 
 # Build API
 WORKDIR /app/apps/api
@@ -53,7 +54,7 @@ RUN adduser --system --uid 1001 nestjs
 # Copy built output and node_modules
 COPY --from=builder /app/apps/api/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/packages/database/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/packages/database/prisma ./prisma
 
 USER nestjs

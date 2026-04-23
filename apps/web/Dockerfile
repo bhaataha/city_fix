@@ -16,6 +16,7 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY packages/shared/package.json ./packages/shared/
 COPY apps/web/package.json ./apps/web/
 
+ENV NODE_ENV=development
 RUN pnpm install --frozen-lockfile
 
 # Stage 2: Build
