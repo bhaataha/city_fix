@@ -3,6 +3,7 @@ import {
   UseGuards, HttpCode, HttpStatus,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt.guard';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { IsString, IsNumber, IsOptional, IsBoolean, IsEnum } from 'class-validator';
 import { IssuesService } from './issues.service';
@@ -69,9 +70,11 @@ export class IssuesController {
   // ─── Public Endpoints (No Auth Required) ──────────────
 
   @Get()
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({ summary: 'List issues (public map view)' })
   async findAll(
     @TenantId() tenantId: string,
+    @CurrentUser() user?: any,
     @Query('status') status?: string,
     @Query('categoryId') categoryId?: string,
     @Query('urgency') urgency?: string,
@@ -85,7 +88,7 @@ export class IssuesController {
     const result = await this.issuesService.findAll(tenantId, {
       status, categoryId, urgency, departmentId, search,
       page, perPage, sortBy, sortOrder,
-    });
+    }, user);
     return { success: true, data: result.issues, meta: result.meta };
   }
 

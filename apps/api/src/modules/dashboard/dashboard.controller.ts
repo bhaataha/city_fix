@@ -2,7 +2,7 @@ import { Controller, Get, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { IssuesService } from '../issues/issues.service';
-import { TenantId } from '../../common/decorators';
+import { TenantId, CurrentUser } from '../../common/decorators';
 import { Roles, RolesGuard } from '../../common/guards/roles.guard';
 
 @ApiTags('Dashboard')
@@ -15,8 +15,8 @@ export class DashboardController {
 
   @Get()
   @ApiOperation({ summary: 'Get dashboard KPIs and statistics' })
-  async getStats(@TenantId() tenantId: string) {
-    const stats = await this.issuesService.getDashboardStats(tenantId);
+  async getStats(@TenantId() tenantId: string, @CurrentUser() user: any) {
+    const stats = await this.issuesService.getDashboardStats(tenantId, user);
     return { success: true, data: stats };
   }
 }

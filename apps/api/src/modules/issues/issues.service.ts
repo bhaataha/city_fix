@@ -3,6 +3,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { generateReportNumber } from '@cityfix/shared';
 import { Prisma } from '@cityfix/database';
 import { MailService } from '../mail/mail.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { IssuesGateway } from './issues.gateway';
 
 @Injectable()
@@ -10,6 +11,7 @@ export class IssuesService {
   constructor(
     private prisma: PrismaService,
     private mailService: MailService,
+    private notificationsService: NotificationsService,
     @Inject(forwardRef(() => IssuesGateway))
     private issuesGateway: IssuesGateway,
   ) {}
@@ -85,8 +87,9 @@ export class IssuesService {
       },
       include: {
         category: { select: { id: true, name: true, icon: true, color: true } },
-        reporter: { select: { id: true, firstName: true, lastName: true } },
+        reporter: { select: { id: true, firstName: true, lastName: true, email: true } },
         assignedDept: { select: { id: true, name: true } },
+        tenant: { select: { name: true } },
         attachments: true,
         _count: { select: { comments: true } },
       },
@@ -94,6 +97,19 @@ export class IssuesService {
 
     // Notify connected clients
     this.issuesGateway.notifyIssueCreated(tenantId, issue);
+
+    // Notify admins (in-app)
+    this.notificationsService.onIssueCreated(tenantId, issue).catch(e => console.error('Failed to create notifications', e));
+
+    // Send confirmation email
+    if (issue.reporter?.email && issue.tenant?.name) {
+      this.mailService.sendIssueCreatedEmail(
+        issue.reporter.email,
+        issue.reportNumber,
+        issue.category?.name || 'כללי',
+        issue.tenant.name
+      ).catch(e => console.error('Failed to send email', e));
+    }
 
     return {
       issue,
@@ -111,7 +127,7 @@ export class IssuesService {
     perPage?: number;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
-  }) {
+  }, user?: any) {
     const page = filters.page || 1;
     const perPage = filters.perPage || 20;
     const skip = (page - 1) * perPage;
@@ -121,7 +137,9 @@ export class IssuesService {
       ...(filters.status && { status: filters.status as any }),
       ...(filters.categoryId && { categoryId: filters.categoryId }),
       ...(filters.urgency && { urgency: filters.urgency as any }),
-      ...(filters.departmentId && { assignedDeptId: filters.departmentId }),
+      ...((user?.role === 'DEPT_MANAGER' ? user.departmentId : filters.departmentId) && {
+        assignedDeptId: user?.role === 'DEPT_MANAGER' ? user.departmentId : filters.departmentId,
+      }),
       ...(filters.search && {
         OR: [
           { reportNumber: { contains: filters.search, mode: 'insensitive' as any } },
@@ -234,6 +252,9 @@ export class IssuesService {
     // Notify connected clients
     this.issuesGateway.notifyIssueStatusChange(tenantId, id, status, updated);
 
+    // Notify user via in-app
+    this.notificationsService.onIssueStatusChanged(tenantId, updated, issue.status, status).catch(e => console.error(e));
+
     if (issue.status !== status && issue.reporter?.email && issue.tenant) {
       await this.mailService.sendStatusUpdateEmail(
         issue.reporter.email,
@@ -316,10 +337,14 @@ export class IssuesService {
     });
   }
 
-  async getDashboardStats(tenantId: string) {
+  async getDashboardStats(tenantId: string, user?: any) {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const deptFilter = user?.role === 'DEPT_MANAGER' && user?.departmentId 
+      ? { assignedDeptId: user.departmentId } 
+      : {};
 
     const [
       totalOpen,
@@ -331,32 +356,32 @@ export class IssuesService {
       byUrgency,
     ] = await Promise.all([
       this.prisma.issueReport.count({
-        where: { tenantId, status: { notIn: ['CLOSED', 'REJECTED', 'DUPLICATE'] } },
+        where: { tenantId, ...deptFilter, status: { notIn: ['CLOSED', 'REJECTED', 'DUPLICATE'] } },
       }),
       this.prisma.issueReport.count({
-        where: { tenantId, createdAt: { gte: todayStart } },
+        where: { tenantId, ...deptFilter, createdAt: { gte: todayStart } },
       }),
       this.prisma.issueReport.count({
-        where: { tenantId, status: 'RESOLVED', resolvedAt: { gte: weekAgo } },
+        where: { tenantId, ...deptFilter, status: 'RESOLVED', resolvedAt: { gte: weekAgo } },
       }),
       this.prisma.issueReport.count({
-        where: { tenantId, slaBreached: true, status: { notIn: ['CLOSED', 'REJECTED'] } },
+        where: { tenantId, ...deptFilter, slaBreached: true, status: { notIn: ['CLOSED', 'REJECTED'] } },
       }),
       this.prisma.issueReport.groupBy({
         by: ['categoryId'],
-        where: { tenantId, status: { notIn: ['CLOSED', 'REJECTED', 'DUPLICATE'] } },
+        where: { tenantId, ...deptFilter, status: { notIn: ['CLOSED', 'REJECTED', 'DUPLICATE'] } },
         _count: true,
         orderBy: { _count: { categoryId: 'desc' } },
         take: 10,
       }),
       this.prisma.issueReport.groupBy({
         by: ['status'],
-        where: { tenantId },
+        where: { tenantId, ...deptFilter },
         _count: true,
       }),
       this.prisma.issueReport.groupBy({
         by: ['urgency'],
-        where: { tenantId, status: { notIn: ['CLOSED', 'REJECTED', 'DUPLICATE'] } },
+        where: { tenantId, ...deptFilter, status: { notIn: ['CLOSED', 'REJECTED', 'DUPLICATE'] } },
         _count: true,
       }),
     ]);
