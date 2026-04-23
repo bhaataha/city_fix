@@ -14,6 +14,7 @@ import { SettingsModule } from './modules/settings/settings.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { MailModule } from './modules/mail/mail.module';
+import { HealthController } from './health.controller';
 
 @Module({
   imports: [
@@ -47,5 +48,6 @@ import { MailModule } from './modules/mail/mail.module';
     NotificationsModule,
     UploadsModule,
   ],
+  controllers: [HealthController],
 })
 export class AppModule {}
