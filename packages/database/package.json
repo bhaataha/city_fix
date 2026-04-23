@@ -2,9 +2,10 @@
   "name": "@cityfix/database",
   "version": "0.1.0",
   "private": true,
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
+    "build": "tsc",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
@@ -12,12 +13,12 @@
     "studio": "prisma studio"
   },
   "dependencies": {
-    "@prisma/client": "^6.5.0",
+    "@prisma/client": "^6.19.3",
     "bcrypt": "^5.1.1"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
-    "prisma": "^6.5.0",
+    "prisma": "^6.19.3",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0"
   },
