@@ -45,38 +45,9 @@ const URGENCY_COLOR: Record<string, string> = {
 };
 const CAT_COLOR_POOL = ['#EF4444', '#F59E0B', '#10B981', '#DC2626', '#8B5CF6', '#F97316', '#22C55E', '#3B82F6', '#6366F1', '#EC4899'];
 
-/* ─── Fallback mock data ───────────────────────── */
-const MOCK_ISSUES = [
-  { id: '1', number: 'CF-2026-00312', category: 'בור בכביש', catColor: '#EF4444', address: 'רחוב הרצל 42', status: 'NEW', statusLabel: 'חדש', statusColor: '#818CF8', urgency: 'HIGH', urgencyColor: '#F59E0B', dept: 'כבישים', reporter: 'יעל ישראלי', date: '20/04', sla: '45 שעות', slaOk: true },
-  { id: '2', number: 'CF-2026-00311', category: 'פנס רחוב תקול', catColor: '#F59E0B', address: 'שד\' רוטשילד 18', status: 'ASSIGNED', statusLabel: 'שויך', statusColor: '#60A5FA', urgency: 'NORMAL', urgencyColor: '#3B82F6', dept: 'חשמל', reporter: 'דני אברהם', date: '20/04', sla: '18 שעות', slaOk: true },
-  { id: '3', number: 'CF-2026-00310', category: 'פסולת / גזם', catColor: '#10B981', address: 'רחוב דיזנגוף 99', status: 'IN_PROGRESS', statusLabel: 'בטיפול', statusColor: '#FBBF24', urgency: 'NORMAL', urgencyColor: '#3B82F6', dept: 'ניקיון', reporter: 'מיכל לוי', date: '19/04', sla: '2 שעות', slaOk: false },
-  { id: '4', number: 'CF-2026-00309', category: 'מפגע בטיחות', catColor: '#DC2626', address: 'רחוב ארלוזורוב 80', status: 'IN_PROGRESS', statusLabel: 'בטיפול', statusColor: '#FBBF24', urgency: 'CRITICAL', urgencyColor: '#EF4444', dept: 'כבישים', reporter: 'עומר חן', date: '19/04', sla: 'חריגה!', slaOk: false },
-  { id: '5', number: 'CF-2026-00308', category: 'מדרכה שבורה', catColor: '#8B5CF6', address: 'רחוב אלנבי 30', status: 'NEW', statusLabel: 'חדש', statusColor: '#818CF8', urgency: 'HIGH', urgencyColor: '#F59E0B', dept: 'כבישים', reporter: 'שירה גולד', date: '18/04', sla: '60 שעות', slaOk: true },
-  { id: '6', number: 'CF-2026-00307', category: 'רמזור תקול', catColor: '#F97316', address: 'צומת קפלן-איבן גבירול', status: 'ASSIGNED', statusLabel: 'שויך', statusColor: '#60A5FA', urgency: 'HIGH', urgencyColor: '#F59E0B', dept: 'תנועה', reporter: 'אבי כץ', date: '18/04', sla: '12 שעות', slaOk: true },
-  { id: '7', number: 'CF-2026-00306', category: 'שלט נפל', catColor: '#22C55E', address: 'רחוב בן יהודה 5', status: 'RESOLVED', statusLabel: 'טופל', statusColor: '#34D399', urgency: 'LOW', urgencyColor: '#6B7280', dept: 'גנים', reporter: 'נעמי פרץ', date: '17/04', sla: '—', slaOk: true },
-  { id: '8', number: 'CF-2026-00305', category: 'הצפה', catColor: '#3B82F6', address: 'רחוב חיים ברלב 12', status: 'NEW', statusLabel: 'חדש', statusColor: '#818CF8', urgency: 'NORMAL', urgencyColor: '#3B82F6', dept: 'כבישים', reporter: 'רון שפירא', date: '17/04', sla: '8 שעות', slaOk: true },
-  { id: '9', number: 'CF-2026-00304', category: 'רכב נטוש', catColor: '#6366F1', address: 'רחוב פינסקר 44', status: 'PENDING_VERIFICATION', statusLabel: 'ממתין לאימות', statusColor: '#A78BFA', urgency: 'LOW', urgencyColor: '#6B7280', dept: 'תנועה', reporter: 'טל מזרחי', date: '16/04', sla: '36 שעות', slaOk: true },
-  { id: '10', number: 'CF-2026-00303', category: 'גרפיטי', catColor: '#EC4899', address: 'רחוב לילינבלום 20', status: 'CLOSED', statusLabel: 'נסגר', statusColor: '#6B7280', urgency: 'LOW', urgencyColor: '#6B7280', dept: 'ניקיון', reporter: 'לינוי ברק', date: '15/04', sla: '—', slaOk: true },
-];
-
-function formatDate(dateStr: string): string {
-  try {
-    const d = new Date(dateStr);
-    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
-  } catch { return ''; }
-}
-
-export default function AdminIssuesPage() {
-  const { tenant } = useParams();
-  const { data: apiIssues, loading } = useIssues();
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [urgencyFilter, setUrgencyFilter] = useState('all');
-  const [search, setSearch] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-
-  // Normalize API data → UI model, or fall back to mock
+  // Normalize API data → UI model
   const issues = useMemo(() => {
-    if (apiIssues && Array.isArray(apiIssues) && apiIssues.length > 0) {
+    if (apiIssues && Array.isArray(apiIssues)) {
       return apiIssues.map((issue: any, idx: number) => ({
         id: issue.id,
         number: issue.reportNumber || `CF-${issue.id?.substring(0, 8)}`,
@@ -99,7 +70,7 @@ export default function AdminIssuesPage() {
         slaOk: true,
       }));
     }
-    return MOCK_ISSUES;
+    return [];
   }, [apiIssues]);
 
   const filtered = issues.filter((issue: any) => {
