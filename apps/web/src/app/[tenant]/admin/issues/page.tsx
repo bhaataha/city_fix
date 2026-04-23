@@ -45,6 +45,21 @@ const URGENCY_COLOR: Record<string, string> = {
 };
 const CAT_COLOR_POOL = ['#EF4444', '#F59E0B', '#10B981', '#DC2626', '#8B5CF6', '#F97316', '#22C55E', '#3B82F6', '#6366F1', '#EC4899'];
 
+function formatDate(dateStr: string): string {
+  try {
+    const d = new Date(dateStr);
+    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+  } catch { return ''; }
+}
+
+export default function AdminIssuesPage() {
+  const { tenant } = useParams();
+  const { data: apiIssues, loading } = useIssues();
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [urgencyFilter, setUrgencyFilter] = useState('all');
+  const [search, setSearch] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+
   // Normalize API data → UI model
   const issues = useMemo(() => {
     if (apiIssues && Array.isArray(apiIssues)) {
