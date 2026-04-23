@@ -15,8 +15,8 @@ COPY packages/shared/ ./packages/shared/
 COPY packages/database/ ./packages/database/
 COPY apps/api/ ./apps/api/
 
-# Install all deps (including dev for prisma CLI + nest CLI)
-RUN pnpm install --frozen-lockfile
+# Install ALL deps (unset NODE_ENV to prevent skipping devDeps)
+RUN NODE_ENV=development pnpm install --frozen-lockfile
 
 # Generate Prisma Client
 WORKDIR /app/packages/database
