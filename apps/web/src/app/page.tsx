@@ -10,8 +10,10 @@ import {
 
 const DEMO_CITIES = [
   { name: 'עיריית תל אביב-יפו', slug: 'tel-aviv', population: '460,000', color: '#6366F1' },
-  { name: 'עיריית חיפה', slug: 'haifa', population: '285,000', color: '#10B981' },
+  { name: 'עיריית כפר קאסם', slug: 'kafr-qasim', population: '24,000', color: '#10B981' },
+  { name: 'עיריית ראש העין', slug: 'rosh-haayin', population: '62,000', color: '#0EA5E9' },
   { name: 'עיריית ירושלים', slug: 'jerusalem', population: '970,000', color: '#F59E0B' },
+  { name: 'עיריית חיפה', slug: 'haifa', population: '285,000', color: '#8B5CF6' },
   { name: 'עיריית באר שבע', slug: 'beer-sheva', population: '210,000', color: '#EC4899' },
 ];
 
@@ -188,7 +190,7 @@ export default function LandingPage() {
           <h2 style={{ fontSize: 'clamp(1.6rem,3.5vw,2.4rem)', fontWeight: 700, color: '#F0F2F8', marginBottom: 10 }}>בחרו את הרשות שלכם</h2>
           <p style={{ fontSize: 15, color: '#8B95B0', marginBottom: 40 }}>כל עירייה מקבלת פורטל ממותג ודשבורד ייעודי</p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
             {DEMO_CITIES.map((city, i) => (
               <Link key={city.slug} href={`/${city.slug}`} style={{
                 display: 'flex', alignItems: 'center', gap: 14, padding: 20, borderRadius: 20, textDecoration: 'none',
