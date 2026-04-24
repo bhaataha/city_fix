@@ -577,16 +577,6 @@ main {
   .btn-secondary {
     transform: none !important;
   }
-
-  /* ─── Reduce card padding ───────────────────── */
-  .glass-card.p-6,
-  .kpi-card {
-    padding: 1rem;
-  }
-
-  .glass-card.p-4 {
-    padding: 0.875rem;
-  }
 }
 
 /* ─── Small phones (< 375px) extra tight ─────── */
