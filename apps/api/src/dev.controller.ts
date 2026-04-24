@@ -25,4 +25,41 @@ export class DevController {
       throw new Error(`Seeding failed: ${error.message}`);
     }
   }
+
+  @Post('fix-urls')
+  @ApiOperation({ summary: 'Fix MinIO URLs by removing port 9001' })
+  async fixUrls() {
+    const issueAttachments = await this.prisma.issueAttachment.findMany({
+      where: { fileUrl: { contains: ':9001' } }
+    });
+    let fixedIssues = 0;
+    for (const attachment of issueAttachments) {
+      const fixedUrl = attachment.fileUrl.replace(':9001', '');
+      await this.prisma.issueAttachment.update({
+        where: { id: attachment.id },
+        data: { fileUrl: fixedUrl },
+      });
+      fixedIssues++;
+    }
+
+    const claimDocuments = await this.prisma.claimDocument.findMany({
+      where: { fileUrl: { contains: ':9001' } }
+    });
+    let fixedClaims = 0;
+    for (const doc of claimDocuments) {
+      const fixedUrl = doc.fileUrl.replace(':9001', '');
+      await this.prisma.claimDocument.update({
+        where: { id: doc.id },
+        data: { fileUrl: fixedUrl },
+      });
+      fixedClaims++;
+    }
+
+    return { 
+      success: true, 
+      message: 'URLs fixed successfully', 
+      fixedIssues,
+      fixedClaims
+    };
+  }
 }
