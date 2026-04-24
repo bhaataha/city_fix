@@ -3,7 +3,8 @@ import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
-async function main() {
+export async function seedDatabase(prismaClient?: PrismaClient) {
+  const prisma = prismaClient || new PrismaClient();
   console.log('🌱 Seeding CityFix database...\n');
 
   // ─── 1. Tenants ──────────────────────────────────
@@ -42,7 +43,35 @@ async function main() {
     },
   });
 
-  console.log('✅ Tenants created:', telAviv.slug, haifa.slug);
+  const kafrQasim = await prisma.tenant.upsert({
+    where: { slug: 'kafr-qasim' },
+    update: {},
+    create: {
+      name: 'עיריית כפר קאסם',
+      slug: 'kafr-qasim',
+      primaryColor: '#10B981',
+      secondaryColor: '#059669',
+      contactEmail: 'info@kfar-qasem.muni.il',
+      contactPhone: '106',
+      population: 24000,
+    },
+  });
+
+  const roshHaayin = await prisma.tenant.upsert({
+    where: { slug: 'rosh-haayin' },
+    update: {},
+    create: {
+      name: 'עיריית ראש העין',
+      slug: 'rosh-haayin',
+      primaryColor: '#F59E0B',
+      secondaryColor: '#D97706',
+      contactEmail: 'info@rosh-haayin.muni.il',
+      contactPhone: '106',
+      population: 74000,
+    },
+  });
+
+  console.log('✅ Tenants created:', telAviv.slug, haifa.slug, kafrQasim.slug, roshHaayin.slug);
 
   // ─── 2. Departments (Tel Aviv) ───────────────────
   const departments = await Promise.all([
@@ -219,7 +248,7 @@ async function main() {
 
   // ─── 7. Status History ───────────────────────────
   const historyEntries = issues.flatMap((issue) => {
-    const base = [{ issueId: issue.id, fromStatus: null, toStatus: IssueStatus.NEW, createdAt: issue.createdAt }];
+    const base: any[] = [{ issueId: issue.id, fromStatus: null, toStatus: IssueStatus.NEW, createdAt: issue.createdAt }];
     if (issue.status !== IssueStatus.NEW) {
       base.push({ issueId: issue.id, fromStatus: IssueStatus.NEW as any, toStatus: issue.status, createdAt: new Date() });
     }
@@ -236,11 +265,13 @@ async function main() {
   console.log('  Citizen:  citizen@example.com   / Admin123!');
 }
 
-main()
-  .catch((e) => {
-    console.error('❌ Seed error:', e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+if (require.main === module) {
+  seedDatabase()
+    .catch((e) => {
+      console.error('❌ Seed error:', e);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}

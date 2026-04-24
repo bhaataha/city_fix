@@ -48,4 +48,4 @@ COPY --from=builder --chown=nestjs:nestjs /deploy ./
 USER nestjs
 EXPOSE 4100
 
-CMD ["node", "dist/main.js"]
+CMD ["sh", "-c", "cd node_modules/@cityfix/database && npx prisma@6 db push --accept-data-loss && cd ../../../ && node dist/main.js"]

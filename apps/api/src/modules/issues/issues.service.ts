@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { generateReportNumber } from '@cityfix/shared';
 import { Prisma } from '@cityfix/database';
@@ -185,37 +185,50 @@ export class IssuesService {
   }
 
   async findOne(tenantId: string, id: string) {
-    const issue = await this.prisma.issueReport.findFirst({
-      where: { id, tenantId },
-      include: {
-        category: true,
-        reporter: { select: { id: true, firstName: true, lastName: true, email: true, phone: true } },
-        assignedDept: true,
-        assignedUser: { select: { id: true, firstName: true, lastName: true } },
-        attachments: { orderBy: { createdAt: 'asc' } },
-        comments: {
-          orderBy: { createdAt: 'asc' },
-          include: { author: { select: { id: true, firstName: true, lastName: true, role: true } } },
+    try {
+      const issue = await this.prisma.issueReport.findFirst({
+        where: { id, tenantId },
+        include: {
+          category: true,
+          reporter: { select: { id: true, firstName: true, lastName: true, email: true, phone: true } },
+          assignedDept: true,
+          assignedUser: { select: { id: true, firstName: true, lastName: true } },
+          attachments: { orderBy: { createdAt: 'asc' } },
+          comments: {
+            orderBy: { createdAt: 'asc' },
+            include: { author: { select: { id: true, firstName: true, lastName: true, role: true } } },
+          },
+          statusHistory: { orderBy: { createdAt: 'asc' } },
+          workOrders: {
+            include: { assignedTo: { select: { id: true, firstName: true, lastName: true } } },
+          },
+          _count: { select: { duplicates: true } },
         },
-        statusHistory: { orderBy: { createdAt: 'asc' } },
-        workOrders: {
-          include: { assignedTo: { select: { id: true, firstName: true, lastName: true } } },
-        },
-        _count: { select: { duplicates: true } },
-      },
-    });
+      });
 
-    if (!issue) {
-      throw new NotFoundException('Issue not found');
+      if (!issue) {
+        throw new NotFoundException('Issue not found');
+      }
+
+      // Increment view count safely
+      try {
+        await this.prisma.issueReport.update({
+          where: { id },
+          data: { viewCount: { increment: 1 } },
+        });
+      } catch (updateError) {
+        // Log but don't fail the request if viewCount increment fails
+        console.error(`Failed to increment view count for issue ${id}:`, updateError);
+      }
+
+      return issue;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      console.error(`Error fetching issue ${id}:`, error);
+      throw new InternalServerErrorException('An error occurred while fetching the issue details');
     }
-
-    // Increment view count
-    await this.prisma.issueReport.update({
-      where: { id },
-      data: { viewCount: { increment: 1 } },
-    });
-
-    return issue;
   }
 
   async updateStatus(tenantId: string, id: string, status: string, changedById?: string, reason?: string) {
