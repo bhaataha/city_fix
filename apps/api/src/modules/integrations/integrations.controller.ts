@@ -1,7 +1,7 @@
-import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { IsArray, IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsOptional } from 'class-validator';
 import { Roles, RolesGuard } from '../../common/guards/roles.guard';
 import { TenantId } from '../../common/decorators';
 import { IntegrationsService, WebhookEvent } from './integrations.service';
@@ -66,6 +66,20 @@ export class IntegrationsController {
   @ApiOperation({ summary: 'Send test webhook to configured endpoint' })
   async testWebhook(@TenantId() tenantId: string) {
     const data = await this.integrations.testWebhook(tenantId);
+    return { success: true, data };
+  }
+
+  @Get('deliveries')
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiOperation({ summary: 'List recent webhook delivery logs' })
+  async deliveries(
+    @TenantId() tenantId: string,
+    @Query('limit') limit?: string,
+  ) {
+    const data = await this.integrations.listWebhookDeliveries(
+      tenantId,
+      limit ? Number(limit) : 30,
+    );
     return { success: true, data };
   }
 }

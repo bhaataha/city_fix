@@ -58,6 +58,7 @@ export default function IntegrationsAdminPage() {
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [deliveries, setDeliveries] = useState<any[]>([]);
 
   useEffect(() => {
     const load = async () => {
@@ -67,6 +68,8 @@ export default function IntegrationsAdminPage() {
       if (res.success && res.data) {
         setCfg({ ...DEFAULTS, ...(res.data as any) });
       }
+      const logs = await api.getIntegrationsDeliveries(String(tenant), accessToken, 20);
+      if (logs.success) setDeliveries((logs.data as any[]) || []);
       setLoading(false);
     };
     load();
@@ -79,6 +82,10 @@ export default function IntegrationsAdminPage() {
     const res = await api.updateIntegrations(String(tenant), accessToken, cfg);
     setSaving(false);
     setMsg(res.success ? 'ההגדרות נשמרו בהצלחה' : `שגיאה בשמירה: ${res.error}`);
+    if (res.success) {
+      const logs = await api.getIntegrationsDeliveries(String(tenant), accessToken, 20);
+      if (logs.success) setDeliveries((logs.data as any[]) || []);
+    }
   };
 
   const testWebhook = async () => {
@@ -93,6 +100,8 @@ export default function IntegrationsAdminPage() {
     } else {
       setMsg(`בדיקת Webhook נכשלה: ${res.error}`);
     }
+    const logs = await api.getIntegrationsDeliveries(String(tenant), accessToken, 20);
+    if (logs.success) setDeliveries((logs.data as any[]) || []);
   };
 
   const toggleEvent = (eventName: string) => {
@@ -213,6 +222,33 @@ export default function IntegrationsAdminPage() {
       </div>
 
       {msg && <div className="glass-card p-3 text-sm">{msg}</div>}
+
+      <div className="glass-card p-5">
+        <h2 className="font-semibold mb-3">Webhook Delivery Logs</h2>
+        <div className="space-y-2">
+          {deliveries.map((d) => {
+            const ok = d.action === 'WEBHOOK_DELIVERY_OK';
+            return (
+              <div
+                key={d.id}
+                className="rounded-lg p-3 text-xs"
+                style={{
+                  background: ok ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)',
+                  border: `1px solid ${ok ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}`,
+                }}
+              >
+                <div className="font-semibold">
+                  {ok ? 'SUCCESS' : 'FAILED'} · {d.data?.event || 'UNKNOWN'} · attempt {d.data?.attempt ?? '-'}
+                </div>
+                <div className="mt-1">status: {d.data?.status ?? '-'} · {new Date(d.createdAt).toLocaleString()}</div>
+                <div className="mt-1 break-all">deliveryId: {d.deliveryId}</div>
+                <div className="mt-1 break-all">url: {d.data?.url || '-'}</div>
+              </div>
+            );
+          })}
+          {!deliveries.length && <div className="text-sm">אין לוגים עדיין.</div>}
+        </div>
+      </div>
     </div>
   );
 }

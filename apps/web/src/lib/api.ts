@@ -159,6 +159,8 @@ export const api = {
     apiFetch(`${tenant}/integrations`, { method: 'PATCH', token, body: JSON.stringify(data) }),
   testIntegrationsWebhook: (tenant: string, token: string) =>
     apiFetch(`${tenant}/integrations/test-webhook`, { method: 'POST', token }),
+  getIntegrationsDeliveries: (tenant: string, token: string, limit = 30) =>
+    apiFetch(`${tenant}/integrations/deliveries?limit=${limit}`, { token }),
   getAdoptionOrphans: (token: string) =>
     apiFetch('admin/adoption/orphans', { token }),
   adoptOrphans: (token: string, issueIds?: string[]) =>
