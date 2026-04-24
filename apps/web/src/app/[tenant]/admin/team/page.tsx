@@ -14,25 +14,7 @@ import { useTeam, useDepartments } from '@/lib/hooks';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
-/* ─── Fallback mock data ─────────────────────────── */
-const MOCK_DEPARTMENTS = [
-  { id: '1', name: 'מחלקת כבישים', color: '#EF4444', memberCount: 4, openIssues: 8 },
-  { id: '2', name: 'מחלקת חשמל', color: '#F59E0B', memberCount: 3, openIssues: 5 },
-  { id: '3', name: 'מחלקת ניקיון', color: '#10B981', memberCount: 6, openIssues: 3 },
-  { id: '4', name: 'מחלקת גנים', color: '#22C55E', memberCount: 2, openIssues: 4 },
-  { id: '5', name: 'מחלקת תנועה', color: '#F97316', memberCount: 3, openIssues: 6 },
-];
-
-const MOCK_MEMBERS = [
-  { id: '1', firstName: 'משה', lastName: 'כהן', email: 'admin@tel-aviv.gov.il', phone: '050-1234567', role: 'ADMIN', department: null, isActive: true, openIssues: 0, resolvedThisMonth: 0 },
-  { id: '2', firstName: 'דוד', lastName: 'לוי', email: 'roads@tel-aviv.gov.il', phone: '050-2345678', role: 'DEPT_MANAGER', department: MOCK_DEPARTMENTS[0], isActive: true, openIssues: 8, resolvedThisMonth: 15 },
-  { id: '3', firstName: 'מירב', lastName: 'דהן', email: 'electric@tel-aviv.gov.il', phone: '050-3456789', role: 'DEPT_MANAGER', department: MOCK_DEPARTMENTS[1], isActive: true, openIssues: 5, resolvedThisMonth: 12 },
-  { id: '4', firstName: 'אבי', lastName: 'מזרחי', email: 'avi.m@tel-aviv.gov.il', phone: '050-4567890', role: 'FIELD_WORKER', department: MOCK_DEPARTMENTS[0], isActive: true, openIssues: 3, resolvedThisMonth: 22 },
-  { id: '5', firstName: 'רונית', lastName: 'שמש', email: 'ronit@tel-aviv.gov.il', phone: '050-5678901', role: 'CALL_CENTER', department: null, isActive: true, openIssues: 12, resolvedThisMonth: 45 },
-  { id: '6', firstName: 'יגאל', lastName: 'ברוך', email: 'yigal@tel-aviv.gov.il', phone: '050-6789012', role: 'FIELD_WORKER', department: MOCK_DEPARTMENTS[2], isActive: false, openIssues: 0, resolvedThisMonth: 0 },
-  { id: '7', firstName: 'נעמה', lastName: 'גולן', email: 'naama@tel-aviv.gov.il', phone: '050-7890123', role: 'LEGAL', department: null, isActive: true, openIssues: 4, resolvedThisMonth: 8 },
-  { id: '8', firstName: 'עמוס', lastName: 'תמיר', email: 'amos@tel-aviv.gov.il', phone: '050-8901234', role: 'FIELD_WORKER', department: MOCK_DEPARTMENTS[0], isActive: true, openIssues: 5, resolvedThisMonth: 18 },
-];
+/* ─── No mock data — real API only ──────────────── */
 
 const ROLE_COLORS: Record<string, string> = {
   ADMIN: '#EF4444', DEPT_MANAGER: '#818CF8', FIELD_WORKER: '#34D399',
@@ -65,7 +47,7 @@ export default function AdminTeamPage() {
         resolvedThisMonth: m.resolvedThisMonth || 0,
       }));
     }
-    return MOCK_MEMBERS;
+    return [];
   }, [apiMembers]);
 
   const departments = useMemo(() => {
@@ -77,7 +59,7 @@ export default function AdminTeamPage() {
         openIssues: d._count?.issues || 0,
       }));
     }
-    return MOCK_DEPARTMENTS;
+    return [];
   }, [apiDepts]);
 
   const filteredMembers = members.filter((m: any) => {

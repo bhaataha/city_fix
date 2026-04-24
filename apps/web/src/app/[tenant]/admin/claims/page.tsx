@@ -23,17 +23,7 @@ const CLAIM_STAGES = [
   { key: 'PAID', label: 'שולמה', color: '#10B981', icon: DollarSign },
 ];
 
-/* ─── Fallback mock data ─────────────────────────── */
-const MOCK_CLAIMS = [
-  { id: '1', claimNumber: 'CL-2026-00001', status: 'SUBMITTED', title: 'נזק לרכב כתוצאה מבור בכביש', claimant: { firstName: 'רוני', lastName: 'אברהם' }, amount: 4500, issueReport: { reportNumber: 'CF-2026-00301' }, createdAt: '2026-04-15', description: 'נזק למתלה קדמי ולצמיג כתוצאה מנפילה לבור ברחוב הרצל' },
-  { id: '2', claimNumber: 'CL-2026-00002', status: 'UNDER_REVIEW', title: 'נזק לאופנוע מפגע בכביש', claimant: { firstName: 'שרה', lastName: 'כהן' }, amount: 8200, issueReport: { reportNumber: 'CF-2026-00311' }, createdAt: '2026-04-12', description: 'נפילה מאופנוע עקב שקיעת כביש' },
-  { id: '3', claimNumber: 'CL-2026-00003', status: 'INVESTIGATION', title: 'נזק לרכוש מנפילת עץ', claimant: { firstName: 'יוסף', lastName: 'לוי' }, amount: 15000, issueReport: { reportNumber: 'CF-2026-00308' }, createdAt: '2026-04-10', description: 'ענף גדול נפל על רכב חונה בגן ציבורי' },
-  { id: '4', claimNumber: 'CL-2026-00004', status: 'LEGAL_REVIEW', title: 'פציעה ממדרכה שבורה', claimant: { firstName: 'מרים', lastName: 'דהן' }, amount: 25000, issueReport: { reportNumber: 'CF-2026-00304' }, createdAt: '2026-04-08', description: 'נפילה וחבלה ברגל כתוצאה ממדרכה שבורה' },
-  { id: '5', claimNumber: 'CL-2026-00005', status: 'APPROVED', title: 'נזק לרכב מפנס שנפל', claimant: { firstName: 'אבי', lastName: 'מזרחי' }, amount: 3200, issueReport: { reportNumber: 'CF-2026-00302' }, createdAt: '2026-03-25', description: 'פנס רחוב שנפל וגרם לנזק לגג הרכב' },
-  { id: '6', claimNumber: 'CL-2026-00006', status: 'REJECTED', title: 'תביעה לנזק מהצפה', claimant: { firstName: 'דנה', lastName: 'ישראלי' }, amount: 12000, issueReport: { reportNumber: 'CF-2026-00308' }, createdAt: '2026-03-20', description: 'הצפה בחניון תת-קרקעי' },
-  { id: '7', claimNumber: 'CL-2026-00007', status: 'PAID', title: 'נזק לרכב מבור', claimant: { firstName: 'עמית', lastName: 'ברק' }, amount: 2800, issueReport: { reportNumber: 'CF-2026-00301' }, createdAt: '2026-03-15', description: 'פגיעה בצמיגים ובחישוקים' },
-  { id: '8', claimNumber: 'CL-2026-00008', status: 'SUBMITTED', title: 'נזק מברזל בולט', claimant: { firstName: 'רחל', lastName: 'פרידמן' }, amount: 6000, issueReport: { reportNumber: 'CF-2026-00306' }, createdAt: '2026-04-18', description: 'קריעת בגד וחבלה קלה מברזל בולט ליד גן ילדים' },
-];
+/* ─── No mock data — real API only ──────────────── */
 
 export default function AdminClaimsPage() {
   const { tenant } = useParams();
@@ -41,7 +31,7 @@ export default function AdminClaimsPage() {
   const [view, setView] = useState<'kanban' | 'table'>('kanban');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Normalize API data or fall back to mock
+  // Normalize API data
   const claims = useMemo(() => {
     if (apiClaims && Array.isArray(apiClaims) && apiClaims.length > 0) {
       return apiClaims.map((c: any) => ({
@@ -56,7 +46,7 @@ export default function AdminClaimsPage() {
         description: c.description || '',
       }));
     }
-    return MOCK_CLAIMS;
+    return [];
   }, [apiClaims]);
 
   const filtered = claims.filter((c: any) => {

@@ -1,79 +1,99 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
   ChevronRight, Bell, CheckCircle2,
-  AlertTriangle, MapPin, Clock, Settings,
-  Check, X
+  AlertTriangle, Clock,
+  Check, Loader2
 } from 'lucide-react';
+import { api } from '@/lib/api';
+import { useAuthStore } from '@/lib/store';
 
-const NOTIFICATIONS = [
-  {
-    id: '1',
-    title: 'הפנייה שלך עודכנה',
-    body: 'פנייה CF-2026-00312 (בור בכביש) הועברה לטיפול מחלקת כבישים.',
-    time: 'לפני 22 דק\'',
-    isRead: false,
-    type: 'status',
-    icon: AlertTriangle,
-    color: '#818CF8',
-  },
-  {
-    id: '2',
-    title: 'תגובה חדשה לפנייה',
-    body: 'משה כהן הגיב על פנייה CF-2026-00312: "צפי לתיקון תוך 48 שעות."',
-    time: 'לפני שעה',
-    isRead: false,
-    type: 'comment',
-    icon: Bell,
-    color: '#F59E0B',
-  },
-  {
-    id: '3',
-    title: 'פנייה טופלה בהצלחה! ✅',
-    body: 'פנייה CF-2026-00298 (פנס רחוב תקול) טופלה. תודה שדיווחת!',
-    time: 'לפני 5 שעות',
-    isRead: true,
-    type: 'resolved',
-    icon: CheckCircle2,
-    color: '#10B981',
-  },
-  {
-    id: '4',
-    title: 'סטטוס פנייה שונה',
-    body: 'פנייה CF-2026-00284 (פסולת / גזם) שונתה לסטטוס "בטיפול".',
-    time: 'אתמול',
-    isRead: true,
-    type: 'status',
-    icon: Clock,
-    color: '#60A5FA',
-  },
-  {
-    id: '5',
-    title: 'הודעת מערכת',
-    body: 'תודה שהצטרפת ל-CityFix! דווח על מפגעים בעיר שלך ועזור לשפר את איכות החיים.',
-    time: 'לפני 3 ימים',
-    isRead: true,
-    type: 'system',
-    icon: Bell,
-    color: '#9CA3AF',
-  },
-];
+interface Notification {
+  id: string;
+  title: string;
+  body: string;
+  type: string;
+  isRead: boolean;
+  sentAt: string;
+  data?: any;
+}
+
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'עכשיו';
+  if (mins < 60) return `לפני ${mins} דק'`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `לפני ${hours === 1 ? 'שעה' : `${hours} שעות`}`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'אתמול';
+  if (days < 7) return `לפני ${days} ימים`;
+  return new Date(dateStr).toLocaleDateString('he-IL');
+}
+
+function getNotifMeta(notif: Notification) {
+  const event = notif.data?.event;
+  switch (event) {
+    case 'ISSUE_CREATED':
+      return { icon: AlertTriangle, color: '#818CF8' };
+    case 'ISSUE_STATUS_CHANGED':
+      return { icon: Clock, color: '#60A5FA' };
+    case 'ISSUE_ASSIGNED':
+      return { icon: CheckCircle2, color: '#F59E0B' };
+    case 'CLAIM_CREATED':
+    case 'CLAIM_STATUS_CHANGED':
+      return { icon: AlertTriangle, color: '#EC4899' };
+    case 'SLA_WARNING':
+    case 'SLA_BREACH':
+      return { icon: AlertTriangle, color: '#EF4444' };
+    default:
+      return { icon: Bell, color: '#9CA3AF' };
+  }
+}
 
 export default function NotificationsPage() {
   const { tenant } = useParams();
-  const [notifications, setNotifications] = useState(NOTIFICATIONS);
+  const { accessToken } = useAuthStore();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const fetchNotifications = useCallback(async () => {
+    if (!accessToken || !tenant) return;
+    setLoading(true);
+    try {
+      const res = await api.getNotifications(tenant as string, accessToken);
+      if (res.success && res.data) {
+        const items = Array.isArray(res.data) ? res.data : (res.data as any).data || [];
+        setNotifications(items);
+        setUnreadCount(items.filter((n: Notification) => !n.isRead).length);
+      }
+    } catch (e) {
+      console.error('Failed to fetch notifications', e);
+    } finally {
+      setLoading(false);
+    }
+  }, [accessToken, tenant]);
 
-  const markAllRead = () => {
-    setNotifications(notifications.map((n) => ({ ...n, isRead: true })));
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
+  const markAllRead = async () => {
+    if (!accessToken || !tenant) return;
+    await api.markAllNotificationsRead(tenant as string, accessToken);
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    setUnreadCount(0);
   };
 
-  const markRead = (id: string) => {
-    setNotifications(notifications.map((n) => n.id === id ? { ...n, isRead: true } : n));
+  const markRead = async (id: string) => {
+    if (!accessToken || !tenant) return;
+    await api.markNotificationRead(tenant as string, id, accessToken);
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+    setUnreadCount(prev => Math.max(0, prev - 1));
   };
 
   return (
@@ -121,7 +141,12 @@ export default function NotificationsPage() {
 
       {/* Notification List */}
       <div className="max-w-2xl mx-auto px-6 py-6 space-y-2">
-        {notifications.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-16">
+            <Loader2 size={32} className="mx-auto mb-3 animate-spin" style={{ color: '#818CF8' }} />
+            <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>טוען הודעות...</p>
+          </div>
+        ) : notifications.length === 0 ? (
           <div className="text-center py-16">
             <Bell size={40} className="mx-auto mb-3" style={{ color: 'var(--color-text-muted)' }} />
             <p className="font-medium" style={{ color: 'var(--color-text-secondary)' }}>
@@ -129,47 +154,51 @@ export default function NotificationsPage() {
             </p>
           </div>
         ) : (
-          notifications.map((notif, i) => (
-            <div
-              key={notif.id}
-              onClick={() => markRead(notif.id)}
-              className="glass-card p-4 flex items-start gap-3 cursor-pointer animate-slide-up"
-              style={{
-                animationDelay: `${i * 40}ms`,
-                borderRight: notif.isRead ? 'none' : `3px solid ${notif.color}`,
-                opacity: notif.isRead ? 0.7 : 1,
-              }}
-            >
+          notifications.map((notif, i) => {
+            const meta = getNotifMeta(notif);
+            const Icon = meta.icon;
+            return (
               <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
-                style={{ background: `${notif.color}15` }}
+                key={notif.id}
+                onClick={() => !notif.isRead && markRead(notif.id)}
+                className="glass-card p-4 flex items-start gap-3 cursor-pointer animate-slide-up"
+                style={{
+                  animationDelay: `${i * 40}ms`,
+                  borderRight: notif.isRead ? 'none' : `3px solid ${meta.color}`,
+                  opacity: notif.isRead ? 0.7 : 1,
+                }}
               >
-                <notif.icon size={18} color={notif.color} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <span
-                    className="text-sm font-bold"
-                    style={{ color: 'var(--color-text-primary)' }}
-                  >
-                    {notif.title}
-                  </span>
-                  {!notif.isRead && (
-                    <div
-                      className="w-2 h-2 rounded-full flex-shrink-0"
-                      style={{ background: '#818CF8' }}
-                    />
-                  )}
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+                  style={{ background: `${meta.color}15` }}
+                >
+                  <Icon size={18} color={meta.color} />
                 </div>
-                <p className="text-xs leading-relaxed mb-1" style={{ color: 'var(--color-text-secondary)' }}>
-                  {notif.body}
-                </p>
-                <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                  {notif.time}
-                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <span
+                      className="text-sm font-bold"
+                      style={{ color: 'var(--color-text-primary)' }}
+                    >
+                      {notif.title}
+                    </span>
+                    {!notif.isRead && (
+                      <div
+                        className="w-2 h-2 rounded-full flex-shrink-0"
+                        style={{ background: '#818CF8' }}
+                      />
+                    )}
+                  </div>
+                  <p className="text-xs leading-relaxed mb-1" style={{ color: 'var(--color-text-secondary)' }}>
+                    {notif.body}
+                  </p>
+                  <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                    {timeAgo(notif.sentAt)}
+                  </span>
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

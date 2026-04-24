@@ -1,125 +1,108 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
-  ChevronLeft, ChevronRight, Filter, Search, Plus,
-  MapPin, Clock, ArrowUp, ArrowDown, Eye,
-  AlertTriangle, Building2
+  ChevronRight, Search, Plus,
+  MapPin, Clock, ArrowUp,
+  AlertTriangle, Loader2
 } from 'lucide-react';
+import { api } from '@/lib/api';
+import { useAuthStore } from '@/lib/store';
 
 const STATUS_FILTERS = [
   { label: 'הכל', value: 'all', color: '#9CA3AF' },
   { label: 'חדש', value: 'NEW', color: '#818CF8' },
+  { label: 'הוקצה', value: 'ASSIGNED', color: '#60A5FA' },
   { label: 'בטיפול', value: 'IN_PROGRESS', color: '#FBBF24' },
   { label: 'טופל', value: 'RESOLVED', color: '#34D399' },
   { label: 'נסגר', value: 'CLOSED', color: '#6B7280' },
 ];
 
-const MY_REPORTS = [
-  {
-    id: '1',
-    number: 'CF-2026-00312',
-    category: 'בור בכביש',
-    categoryColor: '#EF4444',
-    description: 'בור גדול ברחוב הרצל, מזה שבועיים. מסוכן לנהגים ולהולכי רגל.',
-    address: 'רחוב הרצל 42',
-    status: 'NEW',
-    statusLabel: 'חדש',
-    statusColor: '#818CF8',
-    urgency: 'HIGH',
-    urgencyLabel: 'גבוהה',
-    urgencyColor: '#F59E0B',
-    date: '20/04/2026',
-    timeAgo: 'לפני 22 דק\'',
-    comments: 1,
-    upvotes: 4,
-  },
-  {
-    id: '2',
-    number: 'CF-2026-00298',
-    category: 'פנס רחוב תקול',
-    categoryColor: '#F59E0B',
-    description: 'פנס רחוב כבוי השבוע, חשוך מאוד בלילה. סכנה להולכי רגל.',
-    address: 'שדרות רוטשילד 18',
-    status: 'IN_PROGRESS',
-    statusLabel: 'בטיפול',
-    statusColor: '#FBBF24',
-    urgency: 'NORMAL',
-    urgencyLabel: 'רגילה',
-    urgencyColor: '#3B82F6',
-    date: '18/04/2026',
-    timeAgo: 'לפני יומיים',
-    comments: 3,
-    upvotes: 7,
-  },
-  {
-    id: '3',
-    number: 'CF-2026-00284',
-    category: 'פסולת / גזם',
-    categoryColor: '#10B981',
-    description: 'ערימת פסולת ליד הפח ברחוב דיזנגוף. מתפשטת לכביש.',
-    address: 'רחוב דיזנגוף 99',
-    status: 'RESOLVED',
-    statusLabel: 'טופל',
-    statusColor: '#34D399',
-    urgency: 'NORMAL',
-    urgencyLabel: 'רגילה',
-    urgencyColor: '#3B82F6',
-    date: '15/04/2026',
-    timeAgo: 'לפני 5 ימים',
-    comments: 2,
-    upvotes: 3,
-  },
-  {
-    id: '4',
-    number: 'CF-2026-00271',
-    category: 'מדרכה שבורה',
-    categoryColor: '#8B5CF6',
-    description: 'מדרכה שבורה ומסוכנת, סכנה לקשישים ולנכים.',
-    address: 'רחוב אלנבי 30',
-    status: 'NEW',
-    statusLabel: 'חדש',
-    statusColor: '#818CF8',
-    urgency: 'HIGH',
-    urgencyLabel: 'גבוהה',
-    urgencyColor: '#F59E0B',
-    date: '14/04/2026',
-    timeAgo: 'לפני 6 ימים',
-    comments: 0,
-    upvotes: 12,
-  },
-  {
-    id: '5',
-    number: 'CF-2026-00250',
-    category: 'ונדליזם',
-    categoryColor: '#EC4899',
-    description: 'גרפיטי על קיר בניין ציבורי בלילינבלום.',
-    address: 'רחוב לילינבלום 20',
-    status: 'CLOSED',
-    statusLabel: 'נסגר',
-    statusColor: '#6B7280',
-    urgency: 'LOW',
-    urgencyLabel: 'נמוכה',
-    urgencyColor: '#6B7280',
-    date: '10/04/2026',
-    timeAgo: 'לפני 10 ימים',
-    comments: 1,
-    upvotes: 0,
-  },
-];
+const STATUS_LABEL: Record<string, string> = {
+  NEW: 'חדש',
+  ASSIGNED: 'הוקצה',
+  IN_PROGRESS: 'בטיפול',
+  RESOLVED: 'טופל',
+  CLOSED: 'נסגר',
+  REJECTED: 'נדחה',
+  DUPLICATE: 'כפול',
+};
+
+const STATUS_COLOR: Record<string, string> = {
+  NEW: '#818CF8',
+  ASSIGNED: '#60A5FA',
+  IN_PROGRESS: '#FBBF24',
+  RESOLVED: '#34D399',
+  CLOSED: '#6B7280',
+  REJECTED: '#EF4444',
+  DUPLICATE: '#9CA3AF',
+};
+
+const URGENCY_LABEL: Record<string, string> = {
+  LOW: 'נמוכה',
+  NORMAL: 'רגילה',
+  HIGH: 'גבוהה',
+  CRITICAL: 'קריטית',
+};
+
+const URGENCY_COLOR: Record<string, string> = {
+  LOW: '#6B7280',
+  NORMAL: '#3B82F6',
+  HIGH: '#F59E0B',
+  CRITICAL: '#EF4444',
+};
+
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'עכשיו';
+  if (mins < 60) return `לפני ${mins} דק'`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `לפני ${hours === 1 ? 'שעה' : `${hours} שעות`}`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'אתמול';
+  if (days < 7) return `לפני ${days} ימים`;
+  return new Date(dateStr).toLocaleDateString('he-IL');
+}
 
 export default function MyReportsPage() {
   const { tenant } = useParams();
+  const { accessToken, user } = useAuthStore();
   const [activeFilter, setActiveFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [reports, setReports] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = MY_REPORTS.filter((r) => {
-    if (activeFilter !== 'all' && r.status !== activeFilter) return false;
-    if (searchQuery && !r.description.includes(searchQuery) && !r.number.includes(searchQuery) && !r.address.includes(searchQuery)) return false;
-    return true;
-  });
+  const fetchReports = useCallback(async () => {
+    if (!tenant) return;
+    setLoading(true);
+    try {
+      const params: Record<string, string> = {};
+      if (activeFilter !== 'all') params.status = activeFilter;
+      if (searchQuery) params.search = searchQuery;
+
+      const res = await api.getIssues(tenant as string, params);
+      if (res.success && res.data) {
+        // Filter to only user's own reports if logged in
+        let items = Array.isArray(res.data) ? res.data : [];
+        if (user?.id) {
+          items = items.filter((r: any) => r.reporterId === user.id || r.reporter?.id === user.id);
+        }
+        setReports(items);
+      }
+    } catch (e) {
+      console.error('Failed to fetch reports', e);
+    } finally {
+      setLoading(false);
+    }
+  }, [tenant, activeFilter, searchQuery, user?.id]);
+
+  useEffect(() => {
+    const debounce = setTimeout(() => fetchReports(), 300);
+    return () => clearTimeout(debounce);
+  }, [fetchReports]);
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--color-surface-0)' }}>
@@ -186,7 +169,12 @@ export default function MyReportsPage() {
 
       {/* Reports List */}
       <div className="px-6 pb-8 space-y-3">
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-16">
+            <Loader2 size={32} className="mx-auto mb-3 animate-spin" style={{ color: '#818CF8' }} />
+            <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>טוען פניות...</p>
+          </div>
+        ) : reports.length === 0 ? (
           <div className="text-center py-16">
             <AlertTriangle size={40} className="mx-auto mb-3" style={{ color: 'var(--color-text-muted)' }} />
             <p className="font-medium" style={{ color: 'var(--color-text-secondary)' }}>
@@ -197,7 +185,7 @@ export default function MyReportsPage() {
             </p>
           </div>
         ) : (
-          filtered.map((report, i) => (
+          reports.map((report, i) => (
             <Link
               key={report.id}
               href={`/${tenant}/issues/${report.id}`}
@@ -209,23 +197,26 @@ export default function MyReportsPage() {
                 <div className="flex items-center gap-2">
                   <div
                     className="w-2 h-2 rounded-full"
-                    style={{ background: report.categoryColor }}
+                    style={{ background: report.category?.color || '#818CF8' }}
                   />
                   <span className="text-xs font-mono font-semibold" style={{ color: '#818CF8' }}>
-                    {report.number}
+                    {report.reportNumber}
                   </span>
                 </div>
                 <span
                   className="badge"
-                  style={{ background: `${report.statusColor}15`, color: report.statusColor }}
+                  style={{
+                    background: `${STATUS_COLOR[report.status] || '#9CA3AF'}15`,
+                    color: STATUS_COLOR[report.status] || '#9CA3AF',
+                  }}
                 >
-                  {report.statusLabel}
+                  {STATUS_LABEL[report.status] || report.status}
                 </span>
               </div>
 
               {/* Category */}
               <div className="text-sm font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>
-                {report.category}
+                {report.category?.name || 'כללי'}
               </div>
 
               {/* Description */}
@@ -238,13 +229,15 @@ export default function MyReportsPage() {
 
               {/* Bottom row: meta info */}
               <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                <span className="flex items-center gap-1">
-                  <MapPin size={12} />
-                  {report.address}
-                </span>
+                {report.address && (
+                  <span className="flex items-center gap-1">
+                    <MapPin size={12} />
+                    {report.address}
+                  </span>
+                )}
                 <span className="flex items-center gap-1">
                   <Clock size={12} />
-                  {report.timeAgo}
+                  {timeAgo(report.createdAt)}
                 </span>
               </div>
 
@@ -253,17 +246,20 @@ export default function MyReportsPage() {
                 <div className="flex items-center gap-2">
                   <span
                     className="text-xs font-semibold px-2 py-0.5 rounded"
-                    style={{ background: `${report.urgencyColor}15`, color: report.urgencyColor }}
+                    style={{
+                      background: `${URGENCY_COLOR[report.urgency] || '#3B82F6'}15`,
+                      color: URGENCY_COLOR[report.urgency] || '#3B82F6',
+                    }}
                   >
-                    {report.urgencyLabel}
+                    {URGENCY_LABEL[report.urgency] || 'רגילה'}
                   </span>
                 </div>
                 <div className="flex items-center gap-3 text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                  {report._count?.attachments > 0 && (
+                    <span>📎 {report._count.attachments}</span>
+                  )}
                   <span className="flex items-center gap-1">
-                    <ArrowUp size={12} /> {report.upvotes}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    💬 {report.comments}
+                    💬 {report._count?.comments || 0}
                   </span>
                 </div>
               </div>

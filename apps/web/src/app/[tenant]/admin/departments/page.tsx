@@ -13,49 +13,7 @@ import { useDepartments } from '@/lib/hooks';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
-/* ─── Fallback mock data (used when API is unavailable) ── */
-const MOCK_DEPARTMENTS = [
-  {
-    id: '1', name: 'מחלקת כבישים', color: '#EF4444',
-    manager: { firstName: 'דוד', lastName: 'לוי' }, contactEmail: 'roads@tel-aviv.gov.il',
-    _count: { users: 4 }, openIssues: 8, resolvedMonth: 32,
-    categories: ['בור בכביש', 'מדרכה שבורה', 'מפגע בטיחות', 'ניקוז / הצפה', 'ונדליזם'],
-    slaTarget: 48,
-    description: 'אחראית על תחזוקת כבישים, מדרכות ותשתיות דרכים',
-  },
-  {
-    id: '2', name: 'מחלקת חשמל', color: '#F59E0B',
-    manager: { firstName: 'מירב', lastName: 'דהן' }, contactEmail: 'electric@tel-aviv.gov.il',
-    _count: { users: 3 }, openIssues: 5, resolvedMonth: 18,
-    categories: ['פנס רחוב תקול'],
-    slaTarget: 24,
-    description: 'אחראית על תאורת רחוב וציוד חשמלי ציבורי',
-  },
-  {
-    id: '3', name: 'מחלקת ניקיון', color: '#10B981',
-    manager: { firstName: 'שמעון', lastName: 'גבאי' }, contactEmail: 'clean@tel-aviv.gov.il',
-    _count: { users: 6 }, openIssues: 3, resolvedMonth: 45,
-    categories: ['פסולת / גזם'],
-    slaTarget: 8,
-    description: 'אחראית על ניקיון רחובות, פינוי פסולת וגזם',
-  },
-  {
-    id: '4', name: 'מחלקת גנים', color: '#22C55E',
-    manager: { firstName: 'יפה', lastName: 'אלון' }, contactEmail: 'parks@tel-aviv.gov.il',
-    _count: { users: 2 }, openIssues: 4, resolvedMonth: 12,
-    categories: ['מפגע בגינה ציבורית'],
-    slaTarget: 72,
-    description: 'אחראית על גינות ציבוריות ושטחים ירוקים',
-  },
-  {
-    id: '5', name: 'מחלקת תנועה', color: '#F97316',
-    manager: { firstName: 'אורן', lastName: 'נוי' }, contactEmail: 'traffic@tel-aviv.gov.il',
-    _count: { users: 3 }, openIssues: 6, resolvedMonth: 22,
-    categories: ['תמרור / רמזור', 'חניה / רכב נטוש'],
-    slaTarget: 24,
-    description: 'אחראית על תמרורים, רמזורים וסדרי תנועה',
-  },
-];
+/* ─── No mock data — real API only ──────────────── */
 
 // Colors for department cards
 const DEPT_COLORS = ['#EF4444', '#F59E0B', '#10B981', '#22C55E', '#F97316', '#6366F1', '#EC4899', '#14B8A6'];
@@ -73,7 +31,7 @@ export default function AdminDepartmentsPage() {
     name: '', description: '', color: '#6366F1', slaTarget: 48, contactEmail: '',
   });
 
-  // Normalize API data or fall back to mock
+  // Normalize API data
   const departments = useMemo(() => {
     if (apiDepts && Array.isArray(apiDepts) && apiDepts.length > 0) {
       return apiDepts.map((d: any, i: number) => ({
@@ -90,11 +48,7 @@ export default function AdminDepartmentsPage() {
         description: d.description || '',
       }));
     }
-    return MOCK_DEPARTMENTS.map(d => ({
-      ...d,
-      memberCount: d._count.users,
-      manager: d.manager,
-    }));
+    return [];
   }, [apiDepts]);
 
   const filtered = departments.filter((d: any) => {
@@ -114,7 +68,7 @@ export default function AdminDepartmentsPage() {
       setNewDept({ name: '', description: '', color: '#6366F1', slaTarget: 48, contactEmail: '' });
       refetch();
     } catch {
-      // Silently close — mock mode
+      // API error — close gracefully
       setShowAddModal(false);
     } finally {
       setSaving(false);

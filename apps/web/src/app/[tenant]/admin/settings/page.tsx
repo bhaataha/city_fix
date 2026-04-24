@@ -13,7 +13,7 @@ import { useSettings } from '@/lib/hooks';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
-/* ─── Fallback initial config ────────────────────── */
+/* ─── Default initial config (overridden by API) ───── */
 const DEFAULT_CONFIG = {
   name: 'עיריית תל אביב-יפו',
   slug: 'tel-aviv',
@@ -109,7 +109,7 @@ export default function AdminSettingsPage() {
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch {
-      // Mock mode — just show saved
+      // API error — show saved optimistically
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } finally {

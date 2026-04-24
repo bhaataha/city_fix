@@ -13,29 +13,7 @@ import dynamic from 'next/dynamic';
 
 const DashboardCharts = dynamic(() => import('@/components/DashboardCharts'), { ssr: false });
 
-/* ─── Fallback mock data ────────────────────────────── */
-const MOCK_KPI = [
-  { label: 'פניות פתוחות', value: '247', change: '+12%', trend: 'up', icon: AlertTriangle, color: '#818CF8' },
-  { label: 'חדשות היום', value: '18', change: '+3', trend: 'up', icon: TrendingUp, color: '#F59E0B' },
-  { label: 'טופלו השבוע', value: '62', change: '+28%', trend: 'up', icon: CheckCircle2, color: '#10B981' },
-  { label: 'SLA ממוצע', value: '2.4 ימים', change: '-15%', trend: 'down', icon: Clock, color: '#EF4444' },
-];
-
-const MOCK_STATUS = [
-  { label: 'חדש', count: 58, pct: 23, color: '#818CF8' },
-  { label: 'שויך', count: 45, pct: 18, color: '#60A5FA' },
-  { label: 'בטיפול', count: 82, pct: 33, color: '#FBBF24' },
-  { label: 'ממתין', count: 22, pct: 9, color: '#F97316' },
-  { label: 'טופל', count: 40, pct: 16, color: '#34D399' },
-];
-
-const MOCK_RECENT = [
-  { id: '1', number: 'CF-2026-00312', category: 'בור בכביש', location: 'רחוב הרצל 42', status: 'חדש', urgency: 'URGENT', time: 'לפני 22 דק\'', statusColor: '#818CF8', urgencyColor: '#F59E0B' },
-  { id: '2', number: 'CF-2026-00311', category: 'פנס רחוב תקול', location: 'שד\' רוטשילד 18', status: 'שויך', urgency: 'NORMAL', time: 'לפני 45 דק\'', statusColor: '#60A5FA', urgencyColor: '#10B981' },
-  { id: '3', number: 'CF-2026-00310', category: 'פסולת / גזם', location: 'רחוב דיזנגוף 99', status: 'בטיפול', urgency: 'NORMAL', time: 'לפני שעה', statusColor: '#FBBF24', urgencyColor: '#10B981' },
-  { id: '4', number: 'CF-2026-00309', category: 'מדרכה שבורה', location: 'רחוב אלנבי 30', status: 'חדש', urgency: 'URGENT', time: 'לפני 2 שעות', statusColor: '#818CF8', urgencyColor: '#EF4444' },
-  { id: '5', number: 'CF-2026-00308', category: 'שלט נפל', location: 'רחוב בן יהודה 5', status: 'טופל', urgency: 'LOW', time: 'לפני 3 שעות', statusColor: '#34D399', urgencyColor: '#6B7280' },
-];
+/* ─── Empty defaults (no mock data) ────────────────── */
 
 const STATUS_COLOR_MAP: Record<string, string> = {
   NEW: '#818CF8', ASSIGNED: '#60A5FA', IN_PROGRESS: '#FBBF24',
@@ -88,7 +66,12 @@ export default function AdminDashboard() {
         },
       ];
     }
-    return MOCK_KPI;
+    return [
+      { label: 'פניות פתוחות', value: '0', change: '', trend: 'up', icon: AlertTriangle, color: '#818CF8' },
+      { label: 'חדשות היום', value: '0', change: '', trend: 'up', icon: TrendingUp, color: '#F59E0B' },
+      { label: 'טופלו השבוע', value: '0', change: '', trend: 'up', icon: CheckCircle2, color: '#10B981' },
+      { label: 'SLA ממוצע', value: '0 ימים', change: '', trend: 'down', icon: Clock, color: '#EF4444' },
+    ];
   }, [apiDash]);
 
   // Derive status distribution
@@ -105,7 +88,7 @@ export default function AdminDashboard() {
         }));
       }
     }
-    return MOCK_STATUS;
+    return [];
   }, [apiDash]);
 
   // Derive recent issues
@@ -126,7 +109,7 @@ export default function AdminDashboard() {
         }));
       }
     }
-    return MOCK_RECENT;
+    return [];
   }, [apiDash]);
 
   if (loading) {

@@ -1,73 +1,92 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
   ChevronRight, BarChart3, TrendingUp, CheckCircle2,
-  Clock, AlertTriangle, Building2, Users, Calendar,
-  PieChart, ArrowUp, ArrowDown, Target, Award,
+  Clock, Building2,
+  PieChart, Target, Award,
   MapPin, ThumbsUp, Star, Loader2
 } from 'lucide-react';
 import { useTransparencyStats } from '@/lib/hooks';
 
-/* ─── Mock stats ─────────────────────────────────── */
-const STATS = {
-  totalReports: 3847,
-  resolvedReports: 3412,
-  avgResolutionDays: 3.2,
-  citizenSatisfaction: 87,
-  monthlyNew: [180, 195, 210, 245, 198, 220, 235, 250, 215, 240, 262, 248],
-  monthlyResolved: [165, 185, 200, 230, 195, 210, 225, 245, 210, 235, 255, 240],
-};
-
-const DEPT_STATS = [
-  { name: 'מחלקת כבישים', resolved: 892, total: 985, color: '#EF4444', avgDays: 2.8 },
-  { name: 'מחלקת חשמל', resolved: 456, total: 498, color: '#F59E0B', avgDays: 1.5 },
-  { name: 'מחלקת ניקיון', resolved: 1234, total: 1290, color: '#10B981', avgDays: 0.8 },
-  { name: 'מחלקת גנים', resolved: 312, total: 380, color: '#22C55E', avgDays: 4.2 },
-  { name: 'מחלקת תנועה', resolved: 518, total: 694, color: '#F97316', avgDays: 3.5 },
-];
-
-const CATEGORY_STATS = [
-  { name: 'בור בכביש', count: 487, resolved: 445, color: '#EF4444' },
-  { name: 'פנס רחוב תקול', count: 389, resolved: 370, color: '#F59E0B' },
-  { name: 'פסולת / גזם', count: 856, resolved: 842, color: '#10B981' },
-  { name: 'מפגע בטיחות', count: 234, resolved: 210, color: '#DC2626' },
-  { name: 'מדרכה שבורה', count: 312, resolved: 280, color: '#8B5CF6' },
-  { name: 'תמרור / רמזור', count: 278, resolved: 256, color: '#F97316' },
-  { name: 'מפגע בגינה', count: 198, resolved: 165, color: '#22C55E' },
-  { name: 'חניה / רכב נטוש', count: 445, resolved: 420, color: '#6366F1' },
-];
-
-const RECENT_RESOLVED = [
-  { id: '1', category: 'בור בכביש', address: 'רחוב הרצל 42', resolvedAt: '20/04/2026', days: 2 },
-  { id: '2', category: 'פנס רחוב', address: 'שד׳ רוטשילד 18', resolvedAt: '19/04/2026', days: 1 },
-  { id: '3', category: 'פסולת', address: 'רחוב דיזנגוף 99', resolvedAt: '19/04/2026', days: 1 },
-  { id: '4', category: 'מדרכה שבורה', address: 'רחוב אלנבי 30', resolvedAt: '18/04/2026', days: 3 },
-  { id: '5', category: 'גזם', address: 'שאול המלך 50', resolvedAt: '18/04/2026', days: 2 },
-];
+/* ─── No mock data — real API only ──────────────── */
 
 const MONTHS = ['ינו', 'פבר', 'מרץ', 'אפר', 'מאי', 'יוני', 'יולי', 'אוג', 'ספט', 'אוק', 'נוב', 'דצמ'];
+
+const DEPT_COLORS = ['#EF4444', '#F59E0B', '#10B981', '#22C55E', '#F97316', '#6366F1', '#EC4899', '#14B8A6'];
+const CAT_COLORS  = ['#EF4444', '#F59E0B', '#10B981', '#DC2626', '#8B5CF6', '#F97316', '#22C55E', '#6366F1'];
 
 export default function TransparencyPage() {
   const { tenant } = useParams();
   const { data: apiStats, loading } = useTransparencyStats();
 
-  // Merge API stats over mock fallback
+  // Derive stats from API
   const stats = useMemo(() => {
     if (apiStats && typeof apiStats === 'object') {
       const s = apiStats as any;
       return {
-        totalReports: s.totalReports ?? STATS.totalReports,
-        resolvedReports: s.resolvedReports ?? STATS.resolvedReports,
-        avgResolutionDays: s.avgResolutionDays ?? STATS.avgResolutionDays,
-        citizenSatisfaction: s.citizenSatisfaction ?? STATS.citizenSatisfaction,
-        monthlyNew: s.monthlyNew ?? STATS.monthlyNew,
-        monthlyResolved: s.monthlyResolved ?? STATS.monthlyResolved,
+        totalReports: s.totalReports ?? 0,
+        resolvedReports: s.resolvedReports ?? 0,
+        avgResolutionDays: s.avgResolutionDays ?? 0,
+        citizenSatisfaction: s.citizenSatisfaction ?? 0,
+        monthlyNew: s.monthlyNew ?? [],
+        monthlyResolved: s.monthlyResolved ?? [],
       };
     }
-    return STATS;
+    return {
+      totalReports: 0, resolvedReports: 0,
+      avgResolutionDays: 0, citizenSatisfaction: 0,
+      monthlyNew: [] as number[], monthlyResolved: [] as number[],
+    };
+  }, [apiStats]);
+
+  const deptStats = useMemo(() => {
+    if (apiStats && typeof apiStats === 'object') {
+      const s = apiStats as any;
+      if (s.departmentStats && Array.isArray(s.departmentStats)) {
+        return s.departmentStats.map((d: any, i: number) => ({
+          name: d.name || d.departmentName || '',
+          resolved: d.resolved || d.resolvedCount || 0,
+          total: d.total || d.totalCount || 0,
+          color: d.color || DEPT_COLORS[i % DEPT_COLORS.length],
+          avgDays: d.avgDays || d.avgResolutionDays || 0,
+        }));
+      }
+    }
+    return [];
+  }, [apiStats]);
+
+  const categoryStats = useMemo(() => {
+    if (apiStats && typeof apiStats === 'object') {
+      const s = apiStats as any;
+      if (s.categoryStats && Array.isArray(s.categoryStats)) {
+        return s.categoryStats.map((c: any, i: number) => ({
+          name: c.name || c.categoryName || '',
+          count: c.count || c.total || 0,
+          resolved: c.resolved || c.resolvedCount || 0,
+          color: c.color || CAT_COLORS[i % CAT_COLORS.length],
+        }));
+      }
+    }
+    return [];
+  }, [apiStats]);
+
+  const recentResolved = useMemo(() => {
+    if (apiStats && typeof apiStats === 'object') {
+      const s = apiStats as any;
+      if (s.recentResolved && Array.isArray(s.recentResolved)) {
+        return s.recentResolved.map((r: any) => ({
+          id: r.id,
+          category: r.category?.name || r.categoryName || '',
+          address: r.address || '',
+          resolvedAt: r.resolvedAt ? new Date(r.resolvedAt).toLocaleDateString('he-IL') : '',
+          days: r.resolutionDays ?? r.days ?? 0,
+        }));
+      }
+    }
+    return [];
   }, [apiStats]);
 
   const resolveRate = stats.totalReports > 0
@@ -178,143 +197,151 @@ export default function TransparencyPage() {
         </div>
 
         {/* ─── Monthly Chart ─────────────────── */}
-        <div className="glass-card p-6">
-          <h3 className="font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
-            <TrendingUp size={16} color="#818CF8" /> מגמה חודשית
-          </h3>
-          <div className="flex items-center gap-4 mb-4 text-xs" style={{ color: 'var(--color-text-muted)' }}>
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded" style={{ background: '#818CF8' }} /> דיווחים חדשים
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded" style={{ background: '#34D399' }} /> טופלו
-            </span>
-          </div>
-          <div className="flex items-end gap-1.5 h-40">
-            {stats.monthlyNew.map((val: number, i: number) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                <div className="w-full flex gap-0.5" style={{ height: '100%' }}>
-                  <div
-                    className="flex-1 rounded-t-sm transition-all"
-                    style={{
-                      height: `${(val / maxMonthly) * 100}%`,
-                      background: 'linear-gradient(180deg, #818CF8, #6366F1)',
-                      marginTop: 'auto',
-                      opacity: 0.8,
-                    }}
-                  />
-                  <div
-                    className="flex-1 rounded-t-sm transition-all"
-                    style={{
-                      height: `${((stats.monthlyResolved[i] || 0) / maxMonthly) * 100}%`,
-                      background: 'linear-gradient(180deg, #34D399, #10B981)',
-                      marginTop: 'auto',
-                      opacity: 0.8,
-                    }}
-                  />
-                </div>
-                <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{MONTHS[i]}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ─── Department Performance ────────── */}
-        <div className="glass-card p-6">
-          <h3 className="font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
-            <Building2 size={16} color="#818CF8" /> ביצועים לפי מחלקה
-          </h3>
-          <div className="space-y-3">
-            {DEPT_STATS.map((dept) => {
-              const rate = Math.round((dept.resolved / dept.total) * 100);
-              return (
-                <div key={dept.name} className="rounded-xl p-4" style={{ background: 'var(--color-surface-1)', border: '1px solid var(--color-border)' }}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{dept.name}</span>
-                    <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                      <span>ממוצע: {dept.avgDays} ימים</span>
-                      <span className="font-bold" style={{ color: rate > 90 ? '#34D399' : '#F59E0B' }}>{rate}%</span>
-                    </div>
-                  </div>
-                  <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--color-surface-3)' }}>
+        {stats.monthlyNew.length > 0 && (
+          <div className="glass-card p-6">
+            <h3 className="font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+              <TrendingUp size={16} color="#818CF8" /> מגמה חודשית
+            </h3>
+            <div className="flex items-center gap-4 mb-4 text-xs" style={{ color: 'var(--color-text-muted)' }}>
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-3 rounded" style={{ background: '#818CF8' }} /> דיווחים חדשים
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-3 h-3 rounded" style={{ background: '#34D399' }} /> טופלו
+              </span>
+            </div>
+            <div className="flex items-end gap-1.5 h-40">
+              {stats.monthlyNew.map((val: number, i: number) => (
+                <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                  <div className="w-full flex gap-0.5" style={{ height: '100%' }}>
                     <div
-                      className="h-full rounded-full transition-all duration-700"
+                      className="flex-1 rounded-t-sm transition-all"
                       style={{
-                        width: `${rate}%`,
-                        background: `linear-gradient(90deg, ${dept.color}, ${dept.color}80)`,
+                        height: `${(val / maxMonthly) * 100}%`,
+                        background: 'linear-gradient(180deg, #818CF8, #6366F1)',
+                        marginTop: 'auto',
+                        opacity: 0.8,
+                      }}
+                    />
+                    <div
+                      className="flex-1 rounded-t-sm transition-all"
+                      style={{
+                        height: `${((stats.monthlyResolved[i] || 0) / maxMonthly) * 100}%`,
+                        background: 'linear-gradient(180deg, #34D399, #10B981)',
+                        marginTop: 'auto',
+                        opacity: 0.8,
                       }}
                     />
                   </div>
-                  <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
-                    <span>{dept.resolved} טופלו</span>
-                    <span>{dept.total} סה״כ</span>
-                  </div>
+                  <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{MONTHS[i]}</span>
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* ─── Department Performance ────────── */}
+        {deptStats.length > 0 && (
+          <div className="glass-card p-6">
+            <h3 className="font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+              <Building2 size={16} color="#818CF8" /> ביצועים לפי מחלקה
+            </h3>
+            <div className="space-y-3">
+              {deptStats.map((dept: any) => {
+                const rate = dept.total > 0 ? Math.round((dept.resolved / dept.total) * 100) : 0;
+                return (
+                  <div key={dept.name} className="rounded-xl p-4" style={{ background: 'var(--color-surface-1)', border: '1px solid var(--color-border)' }}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{dept.name}</span>
+                      <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                        <span>ממוצע: {dept.avgDays} ימים</span>
+                        <span className="font-bold" style={{ color: rate > 90 ? '#34D399' : '#F59E0B' }}>{rate}%</span>
+                      </div>
+                    </div>
+                    <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--color-surface-3)' }}>
+                      <div
+                        className="h-full rounded-full transition-all duration-700"
+                        style={{
+                          width: `${rate}%`,
+                          background: `linear-gradient(90deg, ${dept.color}, ${dept.color}80)`,
+                        }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
+                      <span>{dept.resolved} טופלו</span>
+                      <span>{dept.total} סה״כ</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* ─── Category Distribution ─────────── */}
-        <div className="glass-card p-6">
-          <h3 className="font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
-            <PieChart size={16} color="#818CF8" /> התפלגות לפי סוג מפגע
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {CATEGORY_STATS.map((cat) => {
-              const rate = Math.round((cat.resolved / cat.count) * 100);
-              return (
-                <div
-                  key={cat.name}
-                  className="rounded-xl p-3 text-center"
-                  style={{
-                    background: `${cat.color}06`,
-                    border: `1px solid ${cat.color}15`,
-                  }}
-                >
-                  <p className="text-lg font-bold" style={{ color: cat.color }}>{cat.count}</p>
-                  <p className="text-xs font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>{cat.name}</p>
-                  <span
-                    className="badge text-xs"
-                    style={{ background: `${rate > 90 ? '#34D399' : '#F59E0B'}15`, color: rate > 90 ? '#34D399' : '#F59E0B' }}
+        {categoryStats.length > 0 && (
+          <div className="glass-card p-6">
+            <h3 className="font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+              <PieChart size={16} color="#818CF8" /> התפלגות לפי סוג מפגע
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {categoryStats.map((cat: any) => {
+                const rate = cat.count > 0 ? Math.round((cat.resolved / cat.count) * 100) : 0;
+                return (
+                  <div
+                    key={cat.name}
+                    className="rounded-xl p-3 text-center"
+                    style={{
+                      background: `${cat.color}06`,
+                      border: `1px solid ${cat.color}15`,
+                    }}
                   >
-                    {rate}% מענה
-                  </span>
-                </div>
-              );
-            })}
+                    <p className="text-lg font-bold" style={{ color: cat.color }}>{cat.count}</p>
+                    <p className="text-xs font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>{cat.name}</p>
+                    <span
+                      className="badge text-xs"
+                      style={{ background: `${rate > 90 ? '#34D399' : '#F59E0B'}15`, color: rate > 90 ? '#34D399' : '#F59E0B' }}
+                    >
+                      {rate}% מענה
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* ─── Recent Resolved ───────────────── */}
-        <div className="glass-card p-6">
-          <h3 className="font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
-            <CheckCircle2 size={16} color="#34D399" /> טופלו לאחרונה
-          </h3>
-          <div className="space-y-2">
-            {RECENT_RESOLVED.map((item) => (
-              <div
-                key={item.id}
-                className="rounded-xl p-3 flex items-center gap-3"
-                style={{ background: 'var(--color-surface-1)', border: '1px solid var(--color-border)' }}
-              >
-                <CheckCircle2 size={16} color="#34D399" />
-                <div className="flex-1">
-                  <span className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                    {item.category}
-                  </span>
-                  <span className="text-xs mr-2" style={{ color: 'var(--color-text-muted)' }}>
-                    — {item.address}
-                  </span>
+        {recentResolved.length > 0 && (
+          <div className="glass-card p-6">
+            <h3 className="font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+              <CheckCircle2 size={16} color="#34D399" /> טופלו לאחרונה
+            </h3>
+            <div className="space-y-2">
+              {recentResolved.map((item: any) => (
+                <div
+                  key={item.id}
+                  className="rounded-xl p-3 flex items-center gap-3"
+                  style={{ background: 'var(--color-surface-1)', border: '1px solid var(--color-border)' }}
+                >
+                  <CheckCircle2 size={16} color="#34D399" />
+                  <div className="flex-1">
+                    <span className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                      {item.category}
+                    </span>
+                    <span className="text-xs mr-2" style={{ color: 'var(--color-text-muted)' }}>
+                      — {item.address}
+                    </span>
+                  </div>
+                  <div className="text-left">
+                    <span className="text-xs block" style={{ color: 'var(--color-text-muted)' }}>{item.resolvedAt}</span>
+                    <span className="text-xs" style={{ color: '#34D399' }}>טופל ב-{item.days} ימים</span>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <span className="text-xs block" style={{ color: 'var(--color-text-muted)' }}>{item.resolvedAt}</span>
-                  <span className="text-xs" style={{ color: '#34D399' }}>טופל ב-{item.days} ימים</span>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* ─── CTA ───────────────────────────── */}
         <div

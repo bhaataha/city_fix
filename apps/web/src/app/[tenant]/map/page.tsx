@@ -31,16 +31,6 @@ const STATUS_LABEL: Record<string, string> = {
   RESOLVED: 'טופל', CLOSED: 'נסגר',
 };
 
-const MOCK_MAP_ISSUES: MapIssue[] = [
-  { id: '1', lat: 32.0853, lng: 34.7818, category: 'בור בכביש', status: 'חדש', color: '#818CF8', urgency: 'NORMAL', address: 'רחוב הרצל 42' },
-  { id: '2', lat: 32.0867, lng: 34.7747, category: 'פנס תקול', status: 'בטיפול', color: '#FBBF24', urgency: 'NORMAL', address: 'שד\' רוטשילד 18' },
-  { id: '3', lat: 32.0820, lng: 34.7801, category: 'פסולת/גזם', status: 'חדש', color: '#818CF8', urgency: 'HIGH', address: 'רחוב דיזנגוף 99' },
-  { id: '4', lat: 32.0890, lng: 34.7853, category: 'מדרכה שבורה', status: 'טופל', color: '#34D399', urgency: 'LOW', address: 'רחוב אלנבי 30' },
-  { id: '5', lat: 32.0840, lng: 34.7780, category: 'שלט נפל', status: 'דחוף', color: '#F87171', urgency: 'URGENT', address: 'רחוב בן יהודה 5' },
-  { id: '6', lat: 32.0810, lng: 34.7860, category: 'רמזור תקול', status: 'שויך', color: '#60A5FA', urgency: 'HIGH', address: 'צומת קפלן' },
-  { id: '7', lat: 32.0875, lng: 34.7790, category: 'הצפה', status: 'בטיפול', color: '#FBBF24', urgency: 'CRITICAL', address: 'רחוב חיים ברלב 12' },
-];
-
 export default function MapPage() {
   const { tenant } = useParams();
   const { data: apiIssues, loading } = useMapIssues();
@@ -48,9 +38,9 @@ export default function MapPage() {
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [selectedIssue, setSelectedIssue] = useState<MapIssue | null>(null);
 
-  // Normalize API → MapIssue or fallback
+  // Normalize API → MapIssue (no mock fallback)
   const issues: MapIssue[] = useMemo(() => {
-    if (apiIssues && Array.isArray(apiIssues) && apiIssues.length > 0) {
+    if (apiIssues && Array.isArray(apiIssues)) {
       return apiIssues
         .filter((i: any) => i.latitude && i.longitude)
         .map((i: any) => ({
@@ -65,7 +55,7 @@ export default function MapPage() {
           reportNumber: i.reportNumber || '',
         }));
     }
-    return MOCK_MAP_ISSUES;
+    return [];
   }, [apiIssues]);
 
   // Filter by category
