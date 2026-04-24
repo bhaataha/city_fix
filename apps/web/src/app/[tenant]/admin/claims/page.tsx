@@ -14,13 +14,17 @@ import { useClaims } from '@/lib/hooks';
 
 /* ─── Stage definitions ──────────────────────────── */
 const CLAIM_STAGES = [
-  { key: 'SUBMITTED', label: 'הוגשה', color: '#818CF8', icon: FileText },
+  { key: 'NEW', label: 'חדש', color: '#818CF8', icon: FileText },
+  { key: 'AWAITING_DOCUMENTS', label: 'השלמת מסמכים', color: '#FBBF24', icon: FileText },
   { key: 'UNDER_REVIEW', label: 'בבדיקה', color: '#60A5FA', icon: Eye },
-  { key: 'INVESTIGATION', label: 'חקירה', color: '#FBBF24', icon: Search },
-  { key: 'LEGAL_REVIEW', label: 'בדיקה משפטית', color: '#F97316', icon: Scale },
+  { key: 'ENGINEERING_REVIEW', label: 'בדיקת מהנדס', color: '#F97316', icon: Search },
+  { key: 'LEGAL_REVIEW', label: 'בדיקה משפטית', color: '#A78BFA', icon: Scale },
+  { key: 'INSURANCE_REVIEW', label: 'בדיקת ביטוח', color: '#EC4899', icon: Scale },
+  { key: 'IN_NEGOTIATION', label: 'במשא ומתן', color: '#3B82F6', icon: TrendingUp },
+  { key: 'PARTIALLY_APPROVED', label: 'אושרה חלקית', color: '#10B981', icon: CheckCircle2 },
   { key: 'APPROVED', label: 'אושרה', color: '#34D399', icon: CheckCircle2 },
   { key: 'REJECTED', label: 'נדחתה', color: '#EF4444', icon: XCircle },
-  { key: 'PAID', label: 'שולמה', color: '#10B981', icon: DollarSign },
+  { key: 'CLOSED', label: 'נסגרה', color: '#9CA3AF', icon: FileText },
 ];
 
 /* ─── No mock data — real API only ──────────────── */
@@ -37,13 +41,13 @@ export default function AdminClaimsPage() {
       return apiClaims.map((c: any) => ({
         id: c.id,
         claimNumber: c.claimNumber || c.number || '',
-        status: c.status || 'SUBMITTED',
-        title: c.title || c.description?.substring(0, 50) || '',
+        status: c.status || 'NEW',
+        title: c.claimType || 'תביעה',
         claimant: c.claimant || c.user || { firstName: '', lastName: '' },
-        amount: c.amount || c.claimedAmount || 0,
-        issueReport: c.issueReport || null,
+        amount: c.claimedAmount || 0,
+        issueReport: c.relatedIssue || null,
         createdAt: c.createdAt ? new Date(c.createdAt).toISOString().split('T')[0] : '',
-        description: c.description || '',
+        description: c.eventDescription || '',
       }));
     }
     return [];
@@ -51,12 +55,12 @@ export default function AdminClaimsPage() {
 
   const filtered = claims.filter((c: any) => {
     const claimantName = `${c.claimant?.firstName || ''} ${c.claimant?.lastName || ''}`;
-    return c.title.includes(searchQuery) || c.claimNumber.includes(searchQuery) || claimantName.includes(searchQuery);
+    return c.title.includes(searchQuery) || c.claimNumber.includes(searchQuery) || claimantName.includes(searchQuery) || c.description.includes(searchQuery);
   });
 
   const totalAmount = claims.reduce((s: number, c: any) => s + (c.amount || 0), 0);
-  const pendingCount = claims.filter((c: any) => ['SUBMITTED', 'UNDER_REVIEW', 'INVESTIGATION'].includes(c.status)).length;
-  const resolvedCount = claims.filter((c: any) => ['APPROVED', 'PAID'].includes(c.status)).length;
+  const pendingCount = claims.filter((c: any) => ['NEW', 'AWAITING_DOCUMENTS', 'UNDER_REVIEW', 'ENGINEERING_REVIEW', 'LEGAL_REVIEW', 'INSURANCE_REVIEW'].includes(c.status)).length;
+  const resolvedCount = claims.filter((c: any) => ['APPROVED', 'PARTIALLY_APPROVED', 'CLOSED'].includes(c.status)).length;
 
   const KPIs = [
     { label: 'סך תביעות', value: claims.length, icon: Scale, color: '#818CF8' },

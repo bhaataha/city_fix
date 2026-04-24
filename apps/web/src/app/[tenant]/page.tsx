@@ -37,6 +37,14 @@ const QUICK_ACTIONS = [
     gradient: 'linear-gradient(135deg, #6366F1, #4F46E5)',
   },
   {
+    icon: ScrollText,
+    label: 'התביעות שלי',
+    desc: 'מעקב תביעות',
+    href: 'my-claims',
+    color: '#EAB308',
+    gradient: 'linear-gradient(135deg, #EAB308, #CA8A04)',
+  },
+  {
     icon: Map,
     label: 'מפה עירונית',
     desc: 'מפגעים על המפה',
@@ -167,10 +175,10 @@ export default function CitizenHomePage() {
       {/* ─── Welcome Banner ─────────────────────── */}
       <section className="px-5 sm:px-6 pt-6 pb-5">
         <div
-          className="rounded-2xl p-6 sm:p-8 relative overflow-hidden"
+          className="rounded-3xl p-8 sm:p-10 relative overflow-hidden shadow-xl"
           style={{
-            background: 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(16,185,129,0.08))',
-            border: '1px solid rgba(99,102,241,0.15)',
+            background: 'linear-gradient(135deg, rgba(99,102,241,0.18), rgba(16,185,129,0.1))',
+            border: '1px solid rgba(99,102,241,0.2)',
           }}
         >
           <div
@@ -187,25 +195,25 @@ export default function CitizenHomePage() {
       </section>
 
       {/* ─── Quick Actions Grid ─────────────────── */}
-      <section className="px-5 sm:px-6 pb-6">
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+      <section className="px-5 sm:px-6 pb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
           {QUICK_ACTIONS.map((action, i) => (
             <Link
               key={action.href}
               href={`/${tenant}/${action.href}`}
-              className="glass-card p-4 sm:p-5 flex flex-col items-center text-center animate-slide-up"
+              className="glass-card p-5 sm:p-6 flex flex-col items-center text-center animate-slide-up hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
               style={{ animationDelay: `${i * 60}ms` }}
             >
               <div
-                className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-3 sm:mb-4"
+                className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center mb-4 shadow-md"
                 style={{ background: action.gradient }}
               >
-                <action.icon size={24} color="white" />
+                <action.icon size={26} color="white" />
               </div>
-              <div className="font-semibold text-sm sm:text-base mb-1 leading-tight" style={{ color: 'var(--color-text-primary)' }}>
+              <div className="font-bold text-[15px] sm:text-base mb-1.5 leading-tight" style={{ color: 'var(--color-text-primary)' }}>
                 {action.label}
               </div>
-              <div className="text-xs sm:text-sm leading-snug" style={{ color: 'var(--color-text-muted)' }}>
+              <div className="text-[13px] sm:text-sm leading-snug" style={{ color: 'var(--color-text-muted)' }}>
                 {action.desc}
               </div>
             </Link>
@@ -214,14 +222,14 @@ export default function CitizenHomePage() {
       </section>
 
       {/* ─── Recent Updates ─────────────────────── */}
-      <section className="px-5 sm:px-6 pb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-bold text-base sm:text-lg" style={{ color: 'var(--color-text-primary)' }}>
+      <section className="px-5 sm:px-6 pb-8">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="font-bold text-lg sm:text-xl" style={{ color: 'var(--color-text-primary)' }}>
             עדכונים אחרונים
           </h2>
           <Link
             href={`/${tenant}/my-reports`}
-            className="text-sm font-medium flex items-center gap-1"
+            className="text-sm font-semibold flex items-center gap-1 hover:opacity-80 transition-opacity"
             style={{ color: '#818CF8' }}
           >
             הכל
@@ -229,16 +237,16 @@ export default function CitizenHomePage() {
           </Link>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           {recentIssues.length > 0 ? recentIssues.map((update: any) => (
             <Link
               key={update.id}
               href={`/${tenant}/issues/${update.id}`}
-              className="glass-card p-4 sm:p-5 flex items-center gap-4"
+              className="glass-card p-5 sm:p-6 flex items-center gap-4 hover:-translate-y-0.5 transition-transform"
               style={{ textDecoration: 'none' }}
             >
               <div
-                className="w-1.5 h-12 rounded-full flex-shrink-0"
+                className="w-1.5 h-14 rounded-full flex-shrink-0"
                 style={{ background: update.color }}
               />
               <div className="flex-1 min-w-0">

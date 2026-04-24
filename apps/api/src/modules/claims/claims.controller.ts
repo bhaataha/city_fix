@@ -68,14 +68,17 @@ export class ClaimsController {
   @ApiOperation({ summary: 'List claims' })
   async findAll(
     @TenantId() tenantId: string,
+    @CurrentUser() user: any,
     @Query('status') status?: string,
     @Query('type') type?: string,
     @Query('search') search?: string,
     @Query('page') page?: number,
     @Query('perPage') perPage?: number,
   ) {
+    const claimantId = user.role === 'RESIDENT' ? user.id : undefined;
+
     const result = await this.claimsService.findAll(tenantId, {
-      status, type, search, page, perPage,
+      status, type, search, claimantId, page, perPage,
     });
     return { success: true, data: result.claims, meta: result.meta };
   }

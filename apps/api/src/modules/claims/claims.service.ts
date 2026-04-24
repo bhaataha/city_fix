@@ -9,15 +9,17 @@ export class ClaimsService {
     status?: string;
     type?: string;
     search?: string;
+    claimantId?: string;
     page?: number;
     perPage?: number;
   }) {
-    const { status, type, search, page = 1, perPage = 20 } = filters;
+    const { status, type, search, claimantId, page = 1, perPage = 20 } = filters;
 
     const where: any = { tenantId };
 
     if (status) where.status = status;
     if (type) where.claimType = type;
+    if (claimantId) where.claimantId = claimantId;
     if (search) {
       where.OR = [
         { eventDescription: { contains: search, mode: 'insensitive' } },

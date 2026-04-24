@@ -1,13 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ChevronRight, Car, Home, UserRound, Briefcase,
   Shield, FileText, Upload, Calendar, MapPin,
-  ChevronLeft, Check, AlertTriangle, X
+  ChevronLeft, Check, AlertTriangle, X, Loader2
 } from 'lucide-react';
+import { api } from '@/lib/api';
+import { useAuthStore } from '@/lib/store';
 
 const CLAIM_TYPES = [
   { value: 'VEHICLE_DAMAGE', label: 'נזק לרכב', icon: Car, desc: 'בור / מכשול בכביש', color: '#6366F1' },
@@ -22,7 +24,9 @@ const STEPS = ['סוג תביעה', 'פרטי אירוע', 'מסמכים', 'סי
 export default function ClaimPage() {
   const { tenant } = useParams();
   const router = useRouter();
+  const { isAuthenticated } = useAuthStore();
   const [step, setStep] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({
     claimType: '',
     eventDate: '',
@@ -37,6 +41,14 @@ export default function ClaimPage() {
   const update = (key: string, value: string) => setForm({ ...form, [key]: value });
 
   const selectedType = CLAIM_TYPES.find((t) => t.value === form.claimType);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push(`/${tenant}/auth?redirect=/${tenant}/claim`);
+    }
+  }, [isAuthenticated, router, tenant]);
+
+  if (!isAuthenticated) return null;
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--color-surface-0)', overflowX: 'hidden' }}>
@@ -352,14 +364,40 @@ export default function ClaimPage() {
               </button>
             ) : (
               <button
-                onClick={() => {
-                  alert('תביעה הוגשה בהצלחה!');
-                  router.push(`/${tenant}`);
+                onClick={async () => {
+                  try {
+                    setIsSubmitting(true);
+                    await api.createClaim(tenant as string, {
+                      claimType: form.claimType,
+                      eventDate: new Date(form.eventDate).toISOString(),
+                      eventDescription: form.witnessInfo 
+                        ? `${form.eventDescription}\n\nעדים:\n${form.witnessInfo}`
+                        : form.eventDescription,
+                      eventAddress: form.eventAddress,
+                      vehiclePlate: form.vehiclePlate,
+                      claimedAmount: form.claimedAmount ? Number(form.claimedAmount) : undefined,
+                      policyNumber: form.policyNumber,
+                    }, useAuthStore.getState().accessToken as string);
+                    router.push(`/${tenant}/my-claims`);
+                  } catch (error) {
+                    console.error('Failed to submit claim:', error);
+                    alert('אירעה שגיאה בהגשת התביעה. אנא נסו שוב.');
+                  } finally {
+                    setIsSubmitting(false);
+                  }
                 }}
-                className="btn-primary flex-1 justify-center"
+                disabled={isSubmitting}
+                className="btn-primary flex-1 justify-center relative"
+                style={{ opacity: isSubmitting ? 0.7 : 1 }}
               >
-                <FileText size={16} />
-                הגש תביעה
+                {isSubmitting ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <>
+                    <FileText size={16} />
+                    הגש תביעה
+                  </>
+                )}
               </button>
             )}
           </div>

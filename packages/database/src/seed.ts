@@ -71,7 +71,190 @@ export async function seedDatabase(prismaClient?: PrismaClient) {
     },
   });
 
-  console.log('✅ Tenants created:', telAviv.slug, haifa.slug, kafrQasim.slug, roshHaayin.slug);
+  const jerusalem = await prisma.tenant.upsert({
+    where: { slug: 'jerusalem' },
+    update: {},
+    create: {
+      name: 'עיריית ירושלים',
+      slug: 'jerusalem',
+      primaryColor: '#FBBF24',
+      secondaryColor: '#B45309',
+      contactEmail: '106@jerusalem.muni.il',
+      contactPhone: '106',
+      website: 'https://www.jerusalem.muni.il',
+      population: 936425,
+    },
+  });
+
+  const rishonLezion = await prisma.tenant.upsert({
+    where: { slug: 'rishon-lezion' },
+    update: {},
+    create: {
+      name: 'עיריית ראשון לציון',
+      slug: 'rishon-lezion',
+      primaryColor: '#F97316',
+      secondaryColor: '#C2410C',
+      contactEmail: 'info@rishonlezion.muni.il',
+      contactPhone: '106',
+      population: 257128,
+    },
+  });
+
+  const petahTikva = await prisma.tenant.upsert({
+    where: { slug: 'petah-tikva' },
+    update: {},
+    create: {
+      name: 'עיריית פתח תקווה',
+      slug: 'petah-tikva',
+      primaryColor: '#3B82F6',
+      secondaryColor: '#1D4ED8',
+      contactEmail: '106@ptikva.org.il',
+      contactPhone: '106',
+      population: 252400,
+    },
+  });
+
+  const ashdod = await prisma.tenant.upsert({
+    where: { slug: 'ashdod' },
+    update: {},
+    create: {
+      name: 'עיריית אשדוד',
+      slug: 'ashdod',
+      primaryColor: '#0EA5E9',
+      secondaryColor: '#0369A1',
+      contactEmail: '106@ashdod.muni.il',
+      contactPhone: '106',
+      population: 225939,
+    },
+  });
+
+  const netanya = await prisma.tenant.upsert({
+    where: { slug: 'netanya' },
+    update: {},
+    create: {
+      name: 'עיריית נתניה',
+      slug: 'netanya',
+      primaryColor: '#EAB308',
+      secondaryColor: '#A16207',
+      contactEmail: '106@netanya.muni.il',
+      contactPhone: '106',
+      population: 224066,
+    },
+  });
+
+  const beersheba = await prisma.tenant.upsert({
+    where: { slug: 'beersheba' },
+    update: {},
+    create: {
+      name: 'עיריית באר שבע',
+      slug: 'beersheba',
+      primaryColor: '#D946EF',
+      secondaryColor: '#A21CAF',
+      contactEmail: '106@br7.org.il',
+      contactPhone: '106',
+      population: 211251,
+    },
+  });
+
+  const holon = await prisma.tenant.upsert({
+    where: { slug: 'holon' },
+    update: {},
+    create: {
+      name: 'עיריית חולון',
+      slug: 'holon',
+      primaryColor: '#8B5CF6',
+      secondaryColor: '#6D28D9',
+      contactEmail: '106@holon.muni.il',
+      contactPhone: '106',
+      population: 196282,
+    },
+  });
+
+  const bneiBrak = await prisma.tenant.upsert({
+    where: { slug: 'bnei-brak' },
+    update: {},
+    create: {
+      name: 'עיריית בני ברק',
+      slug: 'bnei-brak',
+      primaryColor: '#64748B',
+      secondaryColor: '#334155',
+      contactEmail: '106@bbm.org.il',
+      contactPhone: '106',
+      population: 212395,
+    },
+  });
+
+  const ramatGan = await prisma.tenant.upsert({
+    where: { slug: 'ramat-gan' },
+    update: {},
+    create: {
+      name: 'עיריית רמת גן',
+      slug: 'ramat-gan',
+      primaryColor: '#14B8A6',
+      secondaryColor: '#0D9488',
+      contactEmail: '106@ramat-gan.muni.il',
+      contactPhone: '109',
+      population: 172943,
+    },
+  });
+
+  const ashkelon = await prisma.tenant.upsert({
+    where: { slug: 'ashkelon' },
+    update: {},
+    create: {
+      name: 'עיריית אשקלון',
+      slug: 'ashkelon',
+      primaryColor: '#2563EB',
+      secondaryColor: '#1E40AF',
+      contactEmail: '106@ashkelon.muni.il',
+      contactPhone: '106',
+      population: 153138,
+    },
+  });
+
+  const rehovot = await prisma.tenant.upsert({
+    where: { slug: 'rehovot' },
+    update: {},
+    create: {
+      name: 'עיריית רחובות',
+      slug: 'rehovot',
+      primaryColor: '#84CC16',
+      secondaryColor: '#65A30D',
+      contactEmail: '106@rehovot.muni.il',
+      contactPhone: '106',
+      population: 149303,
+    },
+  });
+
+  const batYam = await prisma.tenant.upsert({
+    where: { slug: 'bat-yam' },
+    update: {},
+    create: {
+      name: 'עיריית בת ים',
+      slug: 'bat-yam',
+      primaryColor: '#06B6D4',
+      secondaryColor: '#0891B2',
+      contactEmail: '106@bat-yam.muni.il',
+      contactPhone: '106',
+      population: 128224,
+    },
+  });
+
+  const beitShemesh = await prisma.tenant.upsert({
+    where: { slug: 'beit-shemesh' },
+    update: {},
+    create: {
+      name: 'עיריית בית שמש',
+      slug: 'beit-shemesh',
+      primaryColor: '#F43F5E',
+      secondaryColor: '#E11D48',
+      contactEmail: '106@bshemesh.co.il',
+      contactPhone: '106',
+      population: 152865,
+    },
+  });
+
+  console.log('✅ Tenants created:', telAviv.slug, haifa.slug, kafrQasim.slug, roshHaayin.slug, jerusalem.slug, rishonLezion.slug, petahTikva.slug, ashdod.slug, netanya.slug, beersheba.slug, holon.slug, bneiBrak.slug, ramatGan.slug, ashkelon.slug, rehovot.slug, batYam.slug, beitShemesh.slug);
 
   // ─── 2. Departments (Tel Aviv) ───────────────────
   const departments = await Promise.all([
