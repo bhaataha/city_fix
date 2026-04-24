@@ -78,37 +78,37 @@ export default function CitizenHomePage() {
   const { tenant } = useParams();
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-surface-0)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--color-surface-0)', overflowX: 'hidden' }}>
       {/* ─── Header ─────────────────────────────── */}
       <header
-        className="px-6 py-4 flex items-center justify-between"
+        className="px-4 sm:px-6 py-3 flex items-center justify-between"
         style={{
           background: 'rgba(11, 15, 26, 0.85)',
           backdropFilter: 'blur(20px)',
           borderBottom: '1px solid var(--color-border)',
         }}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center"
+            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
             style={{ background: 'linear-gradient(135deg, #6366F1, #4F46E5)' }}
           >
-            <Building2 size={20} color="white" />
+            <Building2 size={18} color="white" />
           </div>
-          <div>
-            <div className="font-bold text-sm" style={{ color: 'var(--color-text-primary)' }}>
+          <div className="min-w-0">
+            <div className="font-bold text-sm leading-tight" style={{ color: 'var(--color-text-primary)' }}>
               CityFix
             </div>
-            <div className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+            <div className="text-xs truncate" style={{ color: 'var(--color-text-muted)' }}>
               {String(tenant).replace(/-/g, ' ')}
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Link
             href={`/${tenant}/notifications`}
-            className="relative p-2 rounded-lg"
+            className="relative p-2 rounded-lg flex-shrink-0"
             style={{ background: 'var(--color-surface-2)' }}
           >
             <Bell size={18} style={{ color: 'var(--color-text-secondary)' }} />
@@ -119,7 +119,7 @@ export default function CitizenHomePage() {
           </Link>
           <Link
             href={`/${tenant}/auth/login`}
-            className="p-2 rounded-lg"
+            className="p-2 rounded-lg flex-shrink-0"
             style={{ background: 'var(--color-surface-2)' }}
           >
             <User size={18} style={{ color: 'var(--color-text-secondary)' }} />
@@ -128,9 +128,9 @@ export default function CitizenHomePage() {
       </header>
 
       {/* ─── Welcome Banner ─────────────────────── */}
-      <section className="px-6 pt-8 pb-6">
+      <section className="px-4 sm:px-6 pt-5 pb-4">
         <div
-          className="rounded-2xl p-6 relative overflow-hidden"
+          className="rounded-2xl p-5 sm:p-6 relative overflow-hidden"
           style={{
             background: 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(16,185,129,0.08))',
             border: '1px solid rgba(99,102,241,0.15)',
@@ -140,7 +140,7 @@ export default function CitizenHomePage() {
             className="absolute top-0 left-0 w-32 h-32 rounded-full blur-3xl opacity-30"
             style={{ background: '#6366F1' }}
           />
-          <h1 className="text-2xl font-bold mb-2 relative" style={{ color: 'var(--color-text-primary)' }}>
+          <h1 className="text-xl sm:text-2xl font-bold mb-1.5 relative" style={{ color: 'var(--color-text-primary)' }}>
             שלום, תושב/ת 👋
           </h1>
           <p className="text-sm relative" style={{ color: 'var(--color-text-secondary)' }}>
@@ -150,25 +150,25 @@ export default function CitizenHomePage() {
       </section>
 
       {/* ─── Quick Actions Grid ─────────────────── */}
-      <section className="px-6 pb-8">
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <section className="px-4 sm:px-6 pb-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
           {QUICK_ACTIONS.map((action, i) => (
             <Link
               key={action.href}
               href={`/${tenant}/${action.href}`}
-              className="glass-card p-4 flex flex-col items-center text-center animate-slide-up"
+              className="glass-card p-3 sm:p-4 flex flex-col items-center text-center animate-slide-up"
               style={{ animationDelay: `${i * 60}ms` }}
             >
               <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center mb-3"
+                className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mb-2 sm:mb-3"
                 style={{ background: action.gradient }}
               >
-                <action.icon size={22} color="white" />
+                <action.icon size={20} color="white" />
               </div>
-              <div className="font-semibold text-sm mb-0.5" style={{ color: 'var(--color-text-primary)' }}>
+              <div className="font-semibold text-[13px] sm:text-sm mb-0.5 leading-tight" style={{ color: 'var(--color-text-primary)' }}>
                 {action.label}
               </div>
-              <div className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+              <div className="text-[11px] sm:text-xs leading-snug" style={{ color: 'var(--color-text-muted)' }}>
                 {action.desc}
               </div>
             </Link>
@@ -177,9 +177,9 @@ export default function CitizenHomePage() {
       </section>
 
       {/* ─── Recent Updates ─────────────────────── */}
-      <section className="px-6 pb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-bold" style={{ color: 'var(--color-text-primary)' }}>
+      <section className="px-4 sm:px-6 pb-5">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-bold text-sm sm:text-base" style={{ color: 'var(--color-text-primary)' }}>
             עדכונים אחרונים
           </h2>
           <Link
@@ -196,45 +196,45 @@ export default function CitizenHomePage() {
           {RECENT_UPDATES.map((update) => (
             <div
               key={update.id}
-              className="glass-card p-4 flex items-center gap-3"
+              className="glass-card p-3 sm:p-4 flex items-center gap-3"
             >
               <div
                 className="w-1 h-10 rounded-full flex-shrink-0"
                 style={{ background: update.color }}
               />
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                  <span className="text-sm font-semibold truncate" style={{ color: 'var(--color-text-primary)' }}>
                     {update.category}
                   </span>
                   <span
-                    className="badge text-xs"
+                    className="badge text-[11px]"
                     style={{ background: `${update.color}20`, color: update.color }}
                   >
                     {update.status}
                   </span>
                 </div>
-                <div className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                <div className="text-xs truncate" style={{ color: 'var(--color-text-muted)' }}>
                   {update.number} • {update.time}
                 </div>
               </div>
-              <ChevronLeft size={16} style={{ color: 'var(--color-text-muted)' }} />
+              <ChevronLeft size={16} className="flex-shrink-0" style={{ color: 'var(--color-text-muted)' }} />
             </div>
           ))}
         </div>
       </section>
 
       {/* ─── Emergency Banner ───────────────────── */}
-      <section className="px-6 pb-8">
+      <section className="px-4 sm:px-6 pb-5">
         <div
-          className="rounded-xl p-4 flex items-center gap-3"
+          className="rounded-xl p-3 sm:p-4 flex items-center gap-3"
           style={{
             background: 'rgba(239, 68, 68, 0.08)',
             border: '1px solid rgba(239, 68, 68, 0.15)',
           }}
         >
-          <AlertTriangle size={20} color="#EF4444" />
-          <div className="flex-1">
+          <AlertTriangle size={20} color="#EF4444" className="flex-shrink-0" />
+          <div className="flex-1 min-w-0">
             <div className="text-sm font-semibold" style={{ color: '#FCA5A5' }}>
               סכנה מיידית?
             </div>
@@ -244,7 +244,7 @@ export default function CitizenHomePage() {
           </div>
           <a
             href="tel:106"
-            className="px-3 py-1.5 rounded-lg text-xs font-bold"
+            className="px-3 py-1.5 rounded-lg text-xs font-bold flex-shrink-0"
             style={{ background: '#EF4444', color: 'white' }}
           >
             חייגו 106
@@ -253,8 +253,8 @@ export default function CitizenHomePage() {
       </section>
 
       {/* ─── Info Links Footer ───────────────────── */}
-      <section className="px-6 pb-8">
-        <h2 className="font-bold mb-3" style={{ color: 'var(--color-text-primary)' }}>מידע ושירותים</h2>
+      <section className="px-4 sm:px-6 pb-8">
+        <h2 className="font-bold text-sm sm:text-base mb-3" style={{ color: 'var(--color-text-primary)' }}>מידע ושירותים</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {[
             { icon: HelpCircle, label: 'שאלות נפוצות', href: 'faq', color: '#818CF8' },
@@ -267,11 +267,11 @@ export default function CitizenHomePage() {
             <Link
               key={item.href}
               href={`/${tenant}/${item.href}`}
-              className="glass-card px-3 py-3 flex items-center gap-2 text-sm"
+              className="glass-card px-3 py-2.5 flex items-center gap-2 text-[13px] sm:text-sm"
               style={{ color: 'var(--color-text-secondary)' }}
             >
-              <item.icon size={16} style={{ color: item.color }} />
-              {item.label}
+              <item.icon size={15} className="flex-shrink-0" style={{ color: item.color }} />
+              <span className="truncate">{item.label}</span>
             </Link>
           ))}
         </div>

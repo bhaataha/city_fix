@@ -97,30 +97,30 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-surface-0)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--color-surface-0)', overflowX: 'hidden' }}>
       {/* Header */}
       <header
-        className="px-6 py-4 flex items-center justify-between"
+        className="px-4 sm:px-6 py-3 flex items-center justify-between"
         style={{
           background: 'rgba(11,15,26,0.85)',
           backdropFilter: 'blur(20px)',
           borderBottom: '1px solid var(--color-border)',
         }}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
           <Link
             href={`/${tenant}`}
-            className="p-2 rounded-lg"
+            className="p-2 rounded-lg flex-shrink-0"
             style={{ background: 'var(--color-surface-2)' }}
           >
             <ChevronRight size={18} style={{ color: 'var(--color-text-secondary)' }} />
           </Link>
-          <h1 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
+          <h1 className="text-base sm:text-lg font-bold truncate" style={{ color: 'var(--color-text-primary)' }}>
             הודעות
           </h1>
           {unreadCount > 0 && (
             <span
-              className="badge"
+              className="badge flex-shrink-0"
               style={{ background: 'rgba(239,68,68,0.15)', color: '#F87171' }}
             >
               {unreadCount} חדשות
@@ -130,7 +130,7 @@ export default function NotificationsPage() {
         {unreadCount > 0 && (
           <button
             onClick={markAllRead}
-            className="text-xs font-medium flex items-center gap-1"
+            className="text-xs font-medium flex items-center gap-1 flex-shrink-0"
             style={{ color: '#818CF8' }}
           >
             <Check size={14} />
@@ -140,7 +140,7 @@ export default function NotificationsPage() {
       </header>
 
       {/* Notification List */}
-      <div className="max-w-2xl mx-auto px-6 py-6 space-y-2">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-2">
         {loading ? (
           <div className="text-center py-16">
             <Loader2 size={32} className="mx-auto mb-3 animate-spin" style={{ color: '#818CF8' }} />
@@ -161,7 +161,7 @@ export default function NotificationsPage() {
               <div
                 key={notif.id}
                 onClick={() => !notif.isRead && markRead(notif.id)}
-                className="glass-card p-4 flex items-start gap-3 cursor-pointer animate-slide-up"
+                className="glass-card p-3 sm:p-4 flex items-start gap-2.5 sm:gap-3 cursor-pointer animate-slide-up"
                 style={{
                   animationDelay: `${i * 40}ms`,
                   borderRight: notif.isRead ? 'none' : `3px solid ${meta.color}`,
@@ -169,15 +169,15 @@ export default function NotificationsPage() {
                 }}
               >
                 <div
-                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
                   style={{ background: `${meta.color}15` }}
                 >
-                  <Icon size={18} color={meta.color} />
+                  <Icon size={16} color={meta.color} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center justify-between gap-2 mb-1">
                     <span
-                      className="text-sm font-bold"
+                      className="text-sm font-bold truncate"
                       style={{ color: 'var(--color-text-primary)' }}
                     >
                       {notif.title}

@@ -70,8 +70,8 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-surface-0)' }}>
-      <header className="px-6 py-4 flex items-center gap-3" style={{ background: 'rgba(11,15,26,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--color-border)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--color-surface-0)', overflowX: 'hidden' }}>
+      <header className="px-4 sm:px-6 py-3 flex items-center gap-3" style={{ background: 'rgba(11,15,26,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--color-border)' }}>
         <Link href={`/${tenant}`} className="p-2 rounded-lg" style={{ background: 'var(--color-surface-2)' }}>
           <ChevronRight size={18} style={{ color: 'var(--color-text-secondary)' }} />
         </Link>
@@ -79,7 +79,7 @@ export default function ProfilePage() {
         <h1 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>הפרופיל שלי</h1>
       </header>
 
-      <div className="max-w-lg mx-auto px-6 py-6 space-y-6">
+      <div className="max-w-lg mx-auto px-4 sm:px-6 py-5 sm:py-6 space-y-5 sm:space-y-6">
         {/* Avatar */}
         <div className="flex flex-col items-center animate-slide-up">
           <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-3 relative" style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>

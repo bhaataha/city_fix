@@ -105,56 +105,58 @@ export default function MyReportsPage() {
   }, [fetchReports]);
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-surface-0)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--color-surface-0)', overflowX: 'hidden' }}>
       {/* Header */}
       <header
-        className="px-6 py-4 flex items-center justify-between"
+        className="px-4 sm:px-6 py-3 flex items-center justify-between"
         style={{
           background: 'rgba(11,15,26,0.85)',
           backdropFilter: 'blur(20px)',
           borderBottom: '1px solid var(--color-border)',
         }}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
           <Link
             href={`/${tenant}`}
-            className="p-2 rounded-lg"
+            className="p-2 rounded-lg flex-shrink-0"
             style={{ background: 'var(--color-surface-2)' }}
           >
             <ChevronRight size={18} style={{ color: 'var(--color-text-secondary)' }} />
           </Link>
-          <h1 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>
+          <h1 className="text-base sm:text-lg font-bold truncate" style={{ color: 'var(--color-text-primary)' }}>
             הפניות שלי
           </h1>
         </div>
-        <Link href={`/${tenant}/report`} className="btn-primary text-sm py-2 px-4">
+        <Link href={`/${tenant}/report`} className="btn-primary text-sm py-2 px-3 sm:px-4 flex-shrink-0">
           <Plus size={16} />
-          דיווח חדש
+          <span className="hidden sm:inline">דיווח חדש</span>
+          <span className="sm:hidden">דווח</span>
         </Link>
       </header>
 
       {/* Search + Filters */}
-      <div className="px-6 py-4 space-y-3">
+      <div className="px-4 sm:px-6 py-3 sm:py-4 space-y-2.5">
         <div className="relative">
           <input
-            className="input pl-3 pr-10 py-2.5"
+            className="input py-2.5"
+            style={{ paddingInlineStart: '2.5rem' }}
             placeholder="חיפוש לפי מספר, תיאור או כתובת..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           <Search
             size={16}
-            className="absolute right-3 top-1/2 -translate-y-1/2"
-            style={{ color: 'var(--color-text-muted)' }}
+            className="absolute top-1/2 -translate-y-1/2"
+            style={{ color: 'var(--color-text-muted)', insetInlineStart: '0.75rem' }}
           />
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 scrollbar-hide">
           {STATUS_FILTERS.map((f) => (
             <button
               key={f.value}
               onClick={() => setActiveFilter(f.value)}
-              className="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all"
+              className="px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all"
               style={{
                 background: activeFilter === f.value ? `${f.color}20` : 'var(--color-surface-2)',
                 color: activeFilter === f.value ? f.color : 'var(--color-text-muted)',
@@ -168,7 +170,7 @@ export default function MyReportsPage() {
       </div>
 
       {/* Reports List */}
-      <div className="px-6 pb-8 space-y-3">
+      <div className="px-4 sm:px-6 pb-8 space-y-2.5">
         {loading ? (
           <div className="text-center py-16">
             <Loader2 size={32} className="mx-auto mb-3 animate-spin" style={{ color: '#818CF8' }} />
@@ -189,22 +191,22 @@ export default function MyReportsPage() {
             <Link
               key={report.id}
               href={`/${tenant}/issues/${report.id}`}
-              className="glass-card block p-4 animate-slide-up"
+              className="glass-card block p-3 sm:p-4 animate-slide-up"
               style={{ animationDelay: `${i * 50}ms` }}
             >
               {/* Top row: number + status */}
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                <div className="flex items-center gap-2 min-w-0">
                   <div
-                    className="w-2 h-2 rounded-full"
+                    className="w-2 h-2 rounded-full flex-shrink-0"
                     style={{ background: report.category?.color || '#818CF8' }}
                   />
-                  <span className="text-xs font-mono font-semibold" style={{ color: '#818CF8' }}>
+                  <span className="text-xs font-mono font-semibold truncate" style={{ color: '#818CF8' }}>
                     {report.reportNumber}
                   </span>
                 </div>
                 <span
-                  className="badge"
+                  className="badge flex-shrink-0"
                   style={{
                     background: `${STATUS_COLOR[report.status] || '#9CA3AF'}15`,
                     color: STATUS_COLOR[report.status] || '#9CA3AF',
@@ -221,28 +223,28 @@ export default function MyReportsPage() {
 
               {/* Description */}
               <p
-                className="text-xs mb-3 line-clamp-2"
+                className="text-xs mb-2 sm:mb-3 line-clamp-2"
                 style={{ color: 'var(--color-text-secondary)' }}
               >
                 {report.description}
               </p>
 
               {/* Bottom row: meta info */}
-              <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--color-text-muted)' }}>
+              <div className="flex items-center gap-3 sm:gap-4 text-xs" style={{ color: 'var(--color-text-muted)' }}>
                 {report.address && (
-                  <span className="flex items-center gap-1">
-                    <MapPin size={12} />
-                    {report.address}
+                  <span className="flex items-center gap-1 truncate">
+                    <MapPin size={12} className="flex-shrink-0" />
+                    <span className="truncate">{report.address}</span>
                   </span>
                 )}
-                <span className="flex items-center gap-1">
+                <span className="flex items-center gap-1 flex-shrink-0">
                   <Clock size={12} />
                   {timeAgo(report.createdAt)}
                 </span>
               </div>
 
               {/* Urgency + engagement */}
-              <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: '1px solid var(--color-border)' }}>
+              <div className="flex items-center justify-between mt-2.5 sm:mt-3 pt-2.5 sm:pt-3" style={{ borderTop: '1px solid var(--color-border)' }}>
                 <div className="flex items-center gap-2">
                   <span
                     className="text-xs font-semibold px-2 py-0.5 rounded"

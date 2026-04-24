@@ -127,10 +127,10 @@ export default function ReportPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-surface-0)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--color-surface-0)', overflowX: 'hidden' }}>
       {/* ─── Header ─────────────────────────────── */}
       <header
-        className="px-6 py-4 flex items-center gap-3"
+        className="px-4 sm:px-6 py-3 flex items-center gap-3"
         style={{
           background: 'rgba(11, 15, 26, 0.85)',
           backdropFilter: 'blur(20px)',
@@ -156,7 +156,7 @@ export default function ReportPage() {
       </header>
 
       {/* ─── Progress Bar ───────────────────────── */}
-      <div className="px-6 py-4">
+      <div className="px-4 sm:px-6 py-3">
         <div className="flex items-center gap-2 mb-2">
           {steps.map((s, i) => (
             <div key={s.key} className="flex items-center gap-2 flex-1">
@@ -186,7 +186,7 @@ export default function ReportPage() {
 
       {/* ─── Step: Category ─────────────────────── */}
       {step === 'category' && (
-        <div className="px-6 pb-8 animate-fade-in">
+        <div className="px-4 sm:px-6 pb-8 animate-fade-in">
           <h2 className="text-lg font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>
             מה סוג המפגע?
           </h2>
@@ -230,7 +230,7 @@ export default function ReportPage() {
 
       {/* ─── Step: Location ─────────────────────── */}
       {step === 'location' && (
-        <div className="px-6 pb-8 animate-fade-in">
+        <div className="px-4 sm:px-6 pb-8 animate-fade-in">
           <h2 className="text-lg font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>
             איפה המפגע?
           </h2>
@@ -289,7 +289,7 @@ export default function ReportPage() {
 
       {/* ─── Step: Details ──────────────────────── */}
       {step === 'details' && (
-        <div className="px-6 pb-8 animate-fade-in">
+        <div className="px-4 sm:px-6 pb-8 animate-fade-in">
           <h2 className="text-lg font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>
             פרטים נוספים
           </h2>
@@ -416,7 +416,7 @@ export default function ReportPage() {
 
       {/* ─── Step: Review ───────────────────────── */}
       {step === 'review' && (
-        <div className="px-6 pb-8 animate-fade-in">
+        <div className="px-4 sm:px-6 pb-8 animate-fade-in">
           <h2 className="text-lg font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>
             סיכום הדיווח
           </h2>

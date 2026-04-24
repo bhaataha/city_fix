@@ -39,10 +39,10 @@ export default function ClaimPage() {
   const selectedType = CLAIM_TYPES.find((t) => t.value === form.claimType);
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-surface-0)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--color-surface-0)', overflowX: 'hidden' }}>
       {/* Header */}
       <header
-        className="px-6 py-4 flex items-center gap-3"
+        className="px-4 sm:px-6 py-3 flex items-center gap-3"
         style={{
           background: 'rgba(11,15,26,0.85)',
           backdropFilter: 'blur(20px)',
@@ -62,7 +62,7 @@ export default function ClaimPage() {
       </header>
 
       {/* Progress Bar */}
-      <div className="px-6 py-4">
+      <div className="px-4 sm:px-6 py-3">
         <div className="flex items-center gap-2">
           {STEPS.map((s, i) => (
             <div key={s} className="flex-1 flex items-center gap-2">
@@ -98,7 +98,7 @@ export default function ClaimPage() {
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-6 pb-8">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 pb-8">
         {/* ─── Step 0: Claim Type ──────────────────── */}
         {step === 0 && (
           <div className="animate-fade-in">

@@ -103,10 +103,10 @@ export default function TransparencyPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-surface-0)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--color-surface-0)', overflowX: 'hidden' }}>
       {/* ─── Header ─────────────────────────────── */}
       <header
-        className="px-6 py-4 flex items-center gap-3 sticky top-0 z-20"
+        className="px-4 sm:px-6 py-3 flex items-center gap-3 sticky top-0 z-20"
         style={{
           background: 'rgba(11,15,26,0.92)',
           backdropFilter: 'blur(20px)',
@@ -130,10 +130,10 @@ export default function TransparencyPage() {
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto p-6 space-y-6">
+      <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
         {/* ─── Hero Banner ───────────────────── */}
         <div
-          className="rounded-2xl p-8 relative overflow-hidden text-center"
+          className="rounded-2xl p-5 sm:p-8 relative overflow-hidden text-center"
           style={{
             background: 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(52,211,153,0.08))',
             border: '1px solid rgba(99,102,241,0.15)',

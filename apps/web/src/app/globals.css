@@ -2,6 +2,7 @@
 
 /* ═══════════════════════════════════════════════════════════
    CityFix Design System — Premium Municipal Platform v2
+   Mobile-first RTL optimized
    ═══════════════════════════════════════════════════════════ */
 
 @theme {
@@ -79,6 +80,14 @@ body {
   font-family: 'Noto Sans Hebrew', 'Inter', system-ui, sans-serif;
 }
 
+/* Prevent horizontal overflow globally on mobile */
+#__next,
+main,
+[dir="rtl"] > body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
 /* ─── Scrollbar ───────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -124,13 +133,16 @@ body {
   pointer-events: none;
 }
 
-.glass-card:hover {
-  border-color: rgba(99, 102, 241, 0.15);
-  box-shadow:
-    0 8px 32px rgba(99, 102, 241, 0.06),
-    0 0 0 1px rgba(99, 102, 241, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.02);
-  transform: translateY(-3px);
+/* Hover only on non-touch devices */
+@media (hover: hover) {
+  .glass-card:hover {
+    border-color: rgba(99, 102, 241, 0.15);
+    box-shadow:
+      0 8px 32px rgba(99, 102, 241, 0.06),
+      0 0 0 1px rgba(99, 102, 241, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.02);
+    transform: translateY(-3px);
+  }
 }
 
 /* ─── Feature Card (enhanced hover) ──────────────── */
@@ -166,14 +178,15 @@ body {
   pointer-events: none;
 }
 
-.feature-card:hover::before {
-  opacity: 1;
-}
-
-.feature-card:hover {
-  border-color: rgba(99, 102, 241, 0.15);
-  transform: translateY(-4px);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+@media (hover: hover) {
+  .feature-card:hover::before {
+    opacity: 1;
+  }
+  .feature-card:hover {
+    border-color: rgba(99, 102, 241, 0.15);
+    transform: translateY(-4px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  }
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -240,15 +253,17 @@ body {
   transition: opacity 0.3s ease;
 }
 
-.btn-primary:hover {
-  box-shadow:
-    0 0 24px rgba(99, 102, 241, 0.35),
-    0 8px 24px rgba(99, 102, 241, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  transform: translateY(-2px);
+@media (hover: hover) {
+  .btn-primary:hover {
+    box-shadow:
+      0 0 24px rgba(99, 102, 241, 0.35),
+      0 8px 24px rgba(99, 102, 241, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+  }
+  .btn-primary:hover::before { opacity: 1; }
 }
 
-.btn-primary:hover::before { opacity: 1; }
 .btn-primary:active { transform: translateY(0); }
 
 .btn-secondary {
@@ -268,11 +283,13 @@ body {
   backdrop-filter: blur(12px);
 }
 
-.btn-secondary:hover {
-  background: rgba(35, 46, 74, 0.9);
-  border-color: rgba(99, 102, 241, 0.25);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .btn-secondary:hover {
+    background: rgba(35, 46, 74, 0.9);
+    border-color: rgba(99, 102, 241, 0.25);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    transform: translateY(-1px);
+  }
 }
 
 .btn-danger {
@@ -335,10 +352,12 @@ body {
   pointer-events: none;
 }
 
-.kpi-card:hover {
-  border-color: rgba(99,102,241,0.15);
-  transform: translateY(-3px);
-  box-shadow: 0 16px 48px rgba(0,0,0,0.25);
+@media (hover: hover) {
+  .kpi-card:hover {
+    border-color: rgba(99,102,241,0.15);
+    transform: translateY(-3px);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.25);
+  }
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -526,7 +545,7 @@ body {
 .animate-float { animation: float 4s ease-in-out infinite; }
 
 /* ═══════════════════════════════════════════════════════
-   RESPONSIVE
+   RESPONSIVE — Mobile first fixes
    ═══════════════════════════════════════════════════════ */
 
 @media (max-width: 768px) {
@@ -535,6 +554,68 @@ body {
   }
   .sidebar.open {
     transform: translateX(0);
+  }
+
+  /* ─── Reduce padding on mobile ──────────────── */
+  .px-6 {
+    padding-inline: 1rem !important;
+  }
+
+  /* ─── Reduce card border radius on mobile ───── */
+  .glass-card,
+  .kpi-card {
+    border-radius: var(--radius-xl);
+  }
+
+  /* ─── Tighter gaps ──────────────────────────── */
+  .space-y-6 > * + * {
+    margin-top: 1rem;
+  }
+
+  /* ─── Prevent hover shifts on touch ─────────── */
+  .glass-card,
+  .kpi-card,
+  .feature-card,
+  .btn-primary,
+  .btn-secondary {
+    transform: none !important;
+  }
+
+  /* ─── Reduce card padding ───────────────────── */
+  .glass-card.p-6,
+  .kpi-card {
+    padding: 1rem;
+  }
+
+  .glass-card.p-4 {
+    padding: 0.875rem;
+  }
+}
+
+/* ─── Small phones (< 375px) extra tight ─────── */
+@media (max-width: 374px) {
+  .px-6 {
+    padding-inline: 0.75rem !important;
+  }
+  
+  .text-2xl {
+    font-size: 1.25rem !important;
+  }
+
+  .glass-card,
+  .kpi-card {
+    border-radius: var(--radius-lg);
+  }
+}
+
+/* ─── Safe area insets for notched phones ─────── */
+@supports (padding: env(safe-area-inset-top)) {
+  header {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
 
@@ -578,4 +659,16 @@ body {
   pointer-events: none;
   z-index: 9999;
   opacity: 0.4;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SCROLLBAR HIDE UTILITY
+   ═══════════════════════════════════════════════════════ */
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

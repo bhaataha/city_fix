@@ -138,9 +138,9 @@ export default function IssueDetailPage() {
   }));
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-surface-0)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--color-surface-0)', overflowX: 'hidden' }}>
       {/* Header */}
-      <header className="px-6 py-4 flex items-center justify-between sticky top-0 z-20" style={{ background: 'rgba(11,15,26,0.92)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--color-border)' }}>
+      <header className="px-4 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-20" style={{ background: 'rgba(11,15,26,0.92)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--color-border)' }}>
         <div className="flex items-center gap-3">
           <Link href={`/${tenant}/my-reports`} className="p-2 rounded-lg" style={{ background: 'var(--color-surface-2)' }}>
             <ChevronRight size={18} style={{ color: 'var(--color-text-secondary)' }} />
@@ -157,7 +157,7 @@ export default function IssueDetailPage() {
 
       <div className="max-w-2xl mx-auto">
         {/* Status + Category Badge */}
-        <div className="px-6 pt-6 pb-4">
+        <div className="px-4 sm:px-6 pt-5 pb-4">
           <div className="flex items-center gap-2 flex-wrap mb-3">
             <span className="badge text-sm" style={{ background: `${currentStatus.color}15`, color: currentStatus.color }}>{currentStatus.label}</span>
             <span className="badge text-sm" style={{ background: `${urgency.color}15`, color: urgency.color }}>דחיפות: {urgency.label}</span>
@@ -170,7 +170,7 @@ export default function IssueDetailPage() {
         </div>
 
         {/* Photo area */}
-        <div className="px-6 pb-4">
+        <div className="px-4 sm:px-6 pb-4">
           {attachments.length > 0 ? (
             <div className="grid grid-cols-2 gap-2">
               {attachments.map((att: any) => (
@@ -188,7 +188,7 @@ export default function IssueDetailPage() {
         </div>
 
         {/* Info Cards */}
-        <div className="px-6 pb-4 grid grid-cols-2 gap-3">
+        <div className="px-4 sm:px-6 pb-4 grid grid-cols-2 gap-2 sm:gap-3">
           <div className="glass-card p-3">
             <div className="flex items-center gap-2 mb-1"><MapPin size={14} style={{ color: '#818CF8' }} /><span className="text-xs font-semibold" style={{ color: 'var(--color-text-muted)' }}>מיקום</span></div>
             <span className="text-sm" style={{ color: 'var(--color-text-primary)' }}>{issue.address || 'לא צוין'}</span>
@@ -208,7 +208,7 @@ export default function IssueDetailPage() {
         </div>
 
         {/* Action Bar */}
-        <div className="px-6 pb-4 flex items-center gap-3">
+        <div className="px-4 sm:px-6 pb-4 flex items-center gap-2 sm:gap-3">
           <button onClick={handleUpvote} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all" style={{ background: upvoted ? 'rgba(99,102,241,0.15)' : 'var(--color-surface-2)', color: upvoted ? '#818CF8' : 'var(--color-text-secondary)', border: `1px solid ${upvoted ? 'rgba(99,102,241,0.3)' : 'var(--color-border)'}` }}>
             <ArrowUp size={16} /> +1 תומך ({upvoteCount})
           </button>
@@ -218,7 +218,7 @@ export default function IssueDetailPage() {
         </div>
 
         {/* Status Timeline */}
-        <div className="px-6 pb-4">
+        <div className="px-4 sm:px-6 pb-4">
           <button onClick={() => setShowTimeline(!showTimeline)} className="w-full flex items-center justify-between py-3">
             <span className="font-bold text-sm" style={{ color: 'var(--color-text-primary)' }}>מעקב סטטוס</span>
             <ChevronDown size={16} style={{ color: 'var(--color-text-muted)', transform: showTimeline ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
@@ -244,7 +244,7 @@ export default function IssueDetailPage() {
         </div>
 
         {/* Comments */}
-        <div className="px-6 pb-6">
+        <div className="px-4 sm:px-6 pb-6">
           <h3 className="font-bold text-sm mb-3" style={{ color: 'var(--color-text-primary)' }}>
             <MessageCircle size={16} className="inline ml-1" style={{ color: '#818CF8' }} /> תגובות ועדכונים ({comments.length})
           </h3>
