@@ -1,9 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class ClaimsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService
+  ) {}
 
   async findAll(tenantId: string, filters: {
     status?: string;
@@ -82,6 +86,7 @@ export class ClaimsService {
     vehiclePlate?: string;
     policyNumber?: string;
     claimedAmount?: number;
+    documents?: { fileUrl: string; fileName: string; fileSize?: number; mimeType?: string }[];
   }) {
     // Generate claim number
     const count = await this.prisma.claimCase.count({ where: { tenantId } });
@@ -103,9 +108,19 @@ export class ClaimsService {
         policyNumber: data.policyNumber,
         claimedAmount: data.claimedAmount,
         status: 'NEW',
+        documents: data.documents?.length ? {
+          create: data.documents.map(doc => ({
+            fileUrl: doc.fileUrl,
+            fileName: doc.fileName,
+            fileSize: doc.fileSize,
+            mimeType: doc.mimeType,
+            uploadedById: data.claimantId,
+          })),
+        } : undefined,
       },
       include: {
         claimant: { select: { id: true, firstName: true, lastName: true } },
+        documents: true,
       },
     });
   }
@@ -122,6 +137,11 @@ export class ClaimsService {
         ...(status === 'UNDER_REVIEW' && !claim.handlerId ? { handlerId: userId } : {}),
       },
     });
+
+    // Notify the claimant about the status change
+    if (claim.status !== status) {
+      await this.notificationsService.onClaimStatusChanged(tenantId, updated, claim.status, status);
+    }
 
     // If it's a decision status, create a ClaimDecision record
     if (['APPROVED', 'REJECTED', 'PARTIALLY_APPROVED'].includes(status)) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
@@ -27,6 +27,10 @@ export default function ClaimPage() {
   const { isAuthenticated } = useAuthStore();
   const [step, setStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [form, setForm] = useState({
     claimType: '',
     eventDate: '',
@@ -268,6 +272,15 @@ export default function ClaimPage() {
 
             {/* Upload area */}
             <div
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (e.dataTransfer.files) {
+                  const newFiles = Array.from(e.dataTransfer.files);
+                  setFiles(prev => [...prev, ...newFiles]);
+                }
+              }}
               className="rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer transition-all hover:border-[#818CF8]"
               style={{
                 border: '2px dashed var(--color-border)',
@@ -276,12 +289,49 @@ export default function ClaimPage() {
             >
               <Upload size={32} className="mb-3" style={{ color: 'var(--color-text-muted)' }} />
               <span className="text-sm font-semibold" style={{ color: 'var(--color-text-secondary)' }}>
-                לחצו להעלאת קבצים
+                לחצו להעלאת קבצים או גררו לכאן
               </span>
               <span className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
                 תמונות, PDF, עד 10MB לקובץ
               </span>
+              <input 
+                type="file" 
+                multiple 
+                ref={fileInputRef} 
+                className="hidden" 
+                onChange={(e) => {
+                  if (e.target.files) {
+                    const newFiles = Array.from(e.target.files);
+                    setFiles(prev => [...prev, ...newFiles]);
+                  }
+                }}
+              />
             </div>
+            
+            {files.length > 0 && (
+              <div className="space-y-2 mt-4">
+                <div className="text-sm font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>קבצים שנבחרו:</div>
+                {files.map((file, i) => (
+                  <div key={i} className="glass-card p-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-surface-2)' }}>
+                        <FileText size={16} style={{ color: 'var(--color-text-secondary)' }} />
+                      </div>
+                      <div className="truncate">
+                        <div className="text-sm font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>{file.name}</div>
+                        <div className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{(file.size / 1024 / 1024).toFixed(2)} MB</div>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => setFiles(files.filter((_, idx) => idx !== i))}
+                      className="p-1.5 rounded-md hover:bg-red-500/10 transition-colors"
+                    >
+                      <X size={16} className="text-red-500" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div className="glass-card p-3">
               <div className="text-xs font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>
@@ -367,6 +417,22 @@ export default function ClaimPage() {
                 onClick={async () => {
                   try {
                     setIsSubmitting(true);
+                    let uploadedDocuments: any[] = [];
+                    
+                    if (files.length > 0) {
+                      const uploadRes = await api.uploadGeneralFiles(tenant as string, files, useAuthStore.getState().accessToken as string);
+                      if (uploadRes.success && uploadRes.data) {
+                        uploadedDocuments = uploadRes.data.map((doc: any) => ({
+                          fileUrl: doc.url,
+                          fileName: doc.fileName,
+                          fileSize: doc.fileSize,
+                          mimeType: doc.mimeType
+                        }));
+                      } else {
+                        throw new Error(uploadRes.error || 'File upload failed');
+                      }
+                    }
+
                     await api.createClaim(tenant as string, {
                       claimType: form.claimType,
                       eventDate: new Date(form.eventDate).toISOString(),
@@ -377,6 +443,7 @@ export default function ClaimPage() {
                       vehiclePlate: form.vehiclePlate,
                       claimedAmount: form.claimedAmount ? Number(form.claimedAmount) : undefined,
                       policyNumber: form.policyNumber,
+                      documents: uploadedDocuments.length > 0 ? uploadedDocuments : undefined,
                     }, useAuthStore.getState().accessToken as string);
                     router.push(`/${tenant}/my-claims`);
                   } catch (error) {

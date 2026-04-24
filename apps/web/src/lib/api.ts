@@ -227,7 +227,52 @@ export const api = {
       return { success: false, error: err.message };
     }
   },
+  uploadGeneralFiles: async (tenant: string, files: File[], token: string) => {
+    const formData = new FormData();
+    files.forEach((f) => formData.append('files', f));
 
+    let currentToken = token || useAuthStore.getState().accessToken;
+
+    const doUpload = async (authToken: string) => fetch(`${API_BASE}/${tenant}/uploads/general`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${authToken}` },
+      body: formData,
+    });
+
+    try {
+      let res = await doUpload(currentToken as string);
+
+      if (res.status === 401 && useAuthStore.getState().refreshToken) {
+        const refreshToken = useAuthStore.getState().refreshToken;
+        try {
+          const refreshRes = await fetch(`${API_BASE}/${tenant}/auth/refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refreshToken }),
+          });
+
+          if (refreshRes.ok) {
+            const refreshData = await refreshRes.json();
+            if (refreshData.success && refreshData.data) {
+              const { user, accessToken: newAccessToken, refreshToken: newRefreshToken } = refreshData.data;
+              useAuthStore.getState().setAuth(user, newAccessToken, newRefreshToken, String(tenant));
+              res = await doUpload(newAccessToken);
+            } else {
+              useAuthStore.getState().logout();
+            }
+          } else {
+            useAuthStore.getState().logout();
+          }
+        } catch (err) {
+          useAuthStore.getState().logout();
+        }
+      }
+
+      return await res.json();
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  },
   deleteAttachment: (tenant: string, issueId: string, attachmentId: string, token: string) =>
     apiFetch(`${tenant}/uploads/issues/${issueId}/${attachmentId}`, { method: 'DELETE', token }),
 };

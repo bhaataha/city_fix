@@ -2,8 +2,10 @@ import { Module, MiddlewareConsumer } from '@nestjs/common';
 import { ClaimsController } from './claims.controller';
 import { ClaimsService } from './claims.service';
 import { TenantMiddleware } from '../../common/middleware/tenant.middleware';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
+  imports: [NotificationsModule],
   controllers: [ClaimsController],
   providers: [ClaimsService],
   exports: [ClaimsService],

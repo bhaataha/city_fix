@@ -138,4 +138,17 @@ export class NotificationsService {
       { claimId: claim.id },
     );
   }
+
+  async onClaimStatusChanged(tenantId: string, claim: any, oldStatus: string, newStatus: string) {
+    if (claim.claimantId) {
+      await this.create({
+        tenantId,
+        userId: claim.claimantId,
+        event: NotificationEvent.CLAIM_STATUS_CHANGED,
+        title: 'עדכון סטטוס תביעה',
+        body: `תביעה מס' ${claim.claimNumber || ''} עודכנה לסטטוס: ${newStatus}`,
+        data: { claimId: claim.id, oldStatus, newStatus },
+      });
+    }
+  }
 }

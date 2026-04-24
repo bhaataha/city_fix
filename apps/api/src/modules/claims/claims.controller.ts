@@ -46,6 +46,14 @@ class CreateClaimDto {
   @IsOptional()
   @IsNumber()
   claimedAmount?: number;
+
+  @IsOptional()
+  documents?: {
+    fileUrl: string;
+    fileName: string;
+    fileSize?: number;
+    mimeType?: string;
+  }[];
 }
 
 class UpdateClaimStatusDto {
