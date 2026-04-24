@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter, Heebo } from 'next/font/google';
+import { LanguageRuntime } from '@/components/LanguageRuntime';
 import './globals.css';
 
 const inter = Inter({
@@ -30,7 +31,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="he" dir="rtl" suppressHydrationWarning className={`${inter.variable} ${heebo.variable}`}>
-      <body className="w-full overflow-x-hidden">{children}</body>
+      <body className="w-full overflow-x-hidden">
+        <LanguageRuntime />
+        {children}
+      </body>
     </html>
   );
 }

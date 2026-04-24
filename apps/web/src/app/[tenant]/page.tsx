@@ -3,7 +3,10 @@
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { useIssues } from '@/lib/hooks';
+import { type TranslationKey } from '@/lib/i18n';
+import { useI18n } from '@/lib/useI18n';
 import {
   MapPin, FileText, Map, Bell, Phone,
   HelpCircle, ChevronLeft, AlertTriangle,
@@ -11,119 +14,123 @@ import {
   ScrollText, BookOpen, Gavel, PenTool,
 } from 'lucide-react';
 
-const QUICK_ACTIONS = [
+function buildQuickActions(t: (key: TranslationKey) => string) {
+  return [
   {
     icon: AlertTriangle,
-    label: 'דווח מפגע',
-    desc: 'בור, תאורה, פסולת ועוד',
+    label: t('home.report.label'),
+    desc: t('home.report.desc'),
     href: 'report',
     color: '#EF4444',
     gradient: 'linear-gradient(135deg, #EF4444, #DC2626)',
   },
   {
     icon: FileText,
-    label: 'פתח תביעה',
-    desc: 'נזק רכב, רכוש, גוף',
+    label: t('home.claim.label'),
+    desc: t('home.claim.desc'),
     href: 'claim',
     color: '#F59E0B',
     gradient: 'linear-gradient(135deg, #F59E0B, #D97706)',
   },
   {
     icon: ClipboardList,
-    label: 'הפניות שלי',
-    desc: 'מעקב אחר סטטוס',
+    label: t('home.myReports.label'),
+    desc: t('home.myReports.desc'),
     href: 'my-reports',
     color: '#6366F1',
     gradient: 'linear-gradient(135deg, #6366F1, #4F46E5)',
   },
   {
     icon: ScrollText,
-    label: 'התביעות שלי',
-    desc: 'מעקב תביעות',
+    label: t('home.myClaims.label'),
+    desc: t('home.myClaims.desc'),
     href: 'my-claims',
     color: '#EAB308',
     gradient: 'linear-gradient(135deg, #EAB308, #CA8A04)',
   },
   {
     icon: Map,
-    label: 'מפה עירונית',
-    desc: 'מפגעים על המפה',
+    label: t('home.map.label'),
+    desc: t('home.map.desc'),
     href: 'map',
     color: '#10B981',
     gradient: 'linear-gradient(135deg, #10B981, #059669)',
   },
   {
     icon: Bell,
-    label: 'הודעות ועדכונים',
-    desc: 'התראות מהעירייה',
+    label: t('home.notifications.label'),
+    desc: t('home.notifications.desc'),
     href: 'notifications',
     color: '#8B5CF6',
     gradient: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
   },
   {
     icon: Phone,
-    label: 'מוקד עירוני',
-    desc: 'יצירת קשר ישיר',
+    label: t('home.contact.label'),
+    desc: t('home.contact.desc'),
     href: 'contact',
     color: '#0EA5E9',
     gradient: 'linear-gradient(135deg, #0EA5E9, #0284C7)',
   },
   {
     icon: BarChart3,
-    label: 'שקיפות ציבורית',
-    desc: 'נתוני ביצועים ושירות',
+    label: t('home.transparency.label'),
+    desc: t('home.transparency.desc'),
     href: 'transparency',
     color: '#14B8A6',
     gradient: 'linear-gradient(135deg, #14B8A6, #0D9488)',
   },
-];
+  ];
+}
 
 /* ─── Status color mapping ──────────────────────── */
-const STATUS_MAP: Record<string, { label: string; color: string }> = {
-  NEW: { label: 'חדש', color: '#818CF8' },
-  OPEN: { label: 'פתוח', color: '#818CF8' },
-  IN_REVIEW: { label: 'בבדיקה', color: '#F59E0B' },
-  ASSIGNED: { label: 'הוקצה', color: '#0EA5E9' },
-  IN_PROGRESS: { label: 'בטיפול', color: '#FBBF24' },
-  RESOLVED: { label: 'טופל', color: '#34D399' },
-  CLOSED: { label: 'נסגר', color: '#6B7280' },
-  REJECTED: { label: 'נדחה', color: '#EF4444' },
+const STATUS_COLORS: Record<string, string> = {
+  NEW: '#818CF8',
+  OPEN: '#818CF8',
+  IN_REVIEW: '#F59E0B',
+  ASSIGNED: '#0EA5E9',
+  IN_PROGRESS: '#FBBF24',
+  RESOLVED: '#34D399',
+  CLOSED: '#6B7280',
+  REJECTED: '#EF4444',
 };
 
-function timeAgo(dateStr: string): string {
+function timeAgo(dateStr: string, t: (key: TranslationKey, values?: Record<string, string | number>) => string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'עכשיו';
-  if (mins < 60) return `לפני ${mins} דק'`;
+  if (mins < 1) return t('common.now');
+  if (mins < 60) return t('common.minutesAgo', { count: mins });
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `לפני ${hrs} שעות`;
+  if (hrs < 24) return t('common.hoursAgo', { count: hrs });
   const days = Math.floor(hrs / 24);
-  if (days === 1) return 'אתמול';
-  return `לפני ${days} ימים`;
+  if (days === 1) return t('common.yesterday');
+  return t('common.daysAgo', { count: days });
 }
 
 export default function CitizenHomePage() {
   const { tenant } = useParams();
+  const { t, dir } = useI18n();
   const { data: issuesData, loading: issuesLoading } = useIssues({ limit: '5', sort: 'createdAt', order: 'desc' });
+  const quickActions = useMemo(() => buildQuickActions(t), [t]);
 
   const recentIssues = useMemo(() => {
     if (!issuesData) return [];
     const list = Array.isArray(issuesData) ? issuesData : (issuesData as any)?.data || (issuesData as any)?.items || [];
     return list.slice(0, 5).map((issue: any) => {
-      const st = STATUS_MAP[issue.status] || { label: issue.status || '—', color: '#818CF8' };
+      const statusKey = `status.${issue.status}` as TranslationKey;
       return {
         id: issue.id,
         number: issue.referenceNumber || `#${String(issue.id).slice(0, 8)}`,
         category: issue.category?.name || issue.categoryName || '—',
-        status: st.label,
-        color: st.color,
-        time: issue.createdAt ? timeAgo(issue.createdAt) : '',
+        status: issue.status && STATUS_COLORS[issue.status] ? t(statusKey) : issue.status || '—',
+        color: STATUS_COLORS[issue.status] || '#818CF8',
+        time: issue.createdAt ? timeAgo(issue.createdAt, t) : '',
       };
     });
-  }, [issuesData]);
+  }, [issuesData, t]);
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-surface-0)', overflowX: 'hidden' }}>
+    <div className="min-h-screen" dir={dir} style={{ background: 'var(--color-surface-0)', overflowX: 'hidden' }}>
       {/* ─── Header ─────────────────────────────── */}
       <header
         className="px-5 sm:px-6 py-4 flex items-center justify-between"
@@ -151,6 +158,7 @@ export default function CitizenHomePage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <LanguageSwitcher compact />
           <Link
             href={`/${tenant}/notifications`}
             className="relative p-2 rounded-lg flex-shrink-0"
@@ -186,10 +194,10 @@ export default function CitizenHomePage() {
             style={{ background: '#6366F1' }}
           />
           <h1 className="text-2xl sm:text-3xl font-bold mb-2 relative" style={{ color: 'var(--color-text-primary)' }}>
-            שלום, תושב/ת 👋
+            {t('home.greeting')}
           </h1>
           <p className="text-sm sm:text-base relative" style={{ color: 'var(--color-text-secondary)' }}>
-            ראיתם מפגע? דווחו בשניות ועקבו אחרי הטיפול
+            {t('home.welcomeBody')}
           </p>
         </div>
       </section>
@@ -197,7 +205,7 @@ export default function CitizenHomePage() {
       {/* ─── Quick Actions Grid ─────────────────── */}
       <section className="px-5 sm:px-6 pb-8">
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
-          {QUICK_ACTIONS.map((action, i) => (
+          {quickActions.map((action, i) => (
             <Link
               key={action.href}
               href={`/${tenant}/${action.href}`}
@@ -225,14 +233,14 @@ export default function CitizenHomePage() {
       <section className="px-5 sm:px-6 pb-8">
         <div className="flex items-center justify-between mb-5">
           <h2 className="font-bold text-lg sm:text-xl" style={{ color: 'var(--color-text-primary)' }}>
-            עדכונים אחרונים
+            {t('home.recentUpdates')}
           </h2>
           <Link
             href={`/${tenant}/my-reports`}
             className="text-sm font-semibold flex items-center gap-1 hover:opacity-80 transition-opacity"
             style={{ color: '#818CF8' }}
           >
-            הכל
+            {t('common.viewAll')}
             <ChevronLeft size={16} />
           </Link>
         </div>
@@ -270,7 +278,7 @@ export default function CitizenHomePage() {
           )) : (
             <div className="glass-card p-5 text-center">
               <div className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                {issuesLoading ? 'טוען עדכונים...' : 'אין דיווחים אחרונים'}
+                {issuesLoading ? t('common.loadingUpdates') : t('common.noRecentReports')}
               </div>
             </div>
           )}
@@ -289,10 +297,10 @@ export default function CitizenHomePage() {
           <AlertTriangle size={24} color="#EF4444" className="flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <div className="text-base font-bold" style={{ color: '#FCA5A5' }}>
-              סכנה מיידית?
+              {t('home.emergencyTitle')}
             </div>
             <div className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
-              למקרים דחופים חייגו למוקד: 106
+              {t('home.emergencyBody')}
             </div>
           </div>
           <a
@@ -300,22 +308,22 @@ export default function CitizenHomePage() {
             className="px-4 py-2 rounded-lg text-sm font-bold flex-shrink-0 shadow-lg"
             style={{ background: '#EF4444', color: 'white' }}
           >
-            חייגו 106
+            {t('home.call106')}
           </a>
         </div>
       </section>
 
       {/* ─── Info Links Footer ───────────────────── */}
       <section className="px-5 sm:px-6 pb-8">
-        <h2 className="font-bold text-base sm:text-lg mb-4" style={{ color: 'var(--color-text-primary)' }}>מידע ושירותים</h2>
+        <h2 className="font-bold text-base sm:text-lg mb-4" style={{ color: 'var(--color-text-primary)' }}>{t('home.infoServices')}</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { icon: HelpCircle, label: 'שאלות נפוצות', href: 'faq', color: '#818CF8' },
-            { icon: BookOpen, label: 'הוראות שימוש', href: 'guide', color: '#10B981' },
-            { icon: ScrollText, label: 'תקנון', href: 'terms', color: '#F59E0B' },
-            { icon: Gavel, label: 'עורכי דין', href: 'lawyers', color: '#6366F1' },
-            { icon: PenTool, label: 'חתימה דיגיטלית', href: 'signature', color: '#EC4899' },
-            { icon: Phone, label: 'יצירת קשר', href: 'contact', color: '#0EA5E9' },
+            { icon: HelpCircle, label: t('home.faq'), href: 'faq', color: '#818CF8' },
+            { icon: BookOpen, label: t('home.guide'), href: 'guide', color: '#10B981' },
+            { icon: ScrollText, label: t('home.terms'), href: 'terms', color: '#F59E0B' },
+            { icon: Gavel, label: t('home.lawyers'), href: 'lawyers', color: '#6366F1' },
+            { icon: PenTool, label: t('home.signature'), href: 'signature', color: '#EC4899' },
+            { icon: Phone, label: t('home.contact.label'), href: 'contact', color: '#0EA5E9' },
           ].map((item) => (
             <Link
               key={item.href}

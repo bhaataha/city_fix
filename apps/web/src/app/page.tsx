@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { type TranslationKey } from '@/lib/i18n';
+import { useI18n } from '@/lib/useI18n';
 import {
   MapPin, Shield, BarChart3, Bell, ChevronLeft,
   Building2, Users, Clock, Zap, Globe, Sparkles,
@@ -9,32 +12,33 @@ import {
 } from 'lucide-react';
 
 const DEMO_CITIES = [
-  { name: 'עיריית תל אביב-יפו', slug: 'tel-aviv', population: '460,000', color: '#6366F1' },
-  { name: 'עיריית כפר קאסם', slug: 'kafr-qasim', population: '24,000', color: '#10B981' },
-  { name: 'עיריית ראש העין', slug: 'rosh-haayin', population: '62,000', color: '#0EA5E9' },
-  { name: 'עיריית ירושלים', slug: 'jerusalem', population: '970,000', color: '#F59E0B' },
-  { name: 'עיריית חיפה', slug: 'haifa', population: '285,000', color: '#8B5CF6' },
-  { name: 'עיריית באר שבע', slug: 'beer-sheva', population: '210,000', color: '#EC4899' },
+  { nameKey: 'city.telAviv', slug: 'tel-aviv', population: '460,000', color: '#6366F1' },
+  { nameKey: 'city.kafrQasim', slug: 'kafr-qasim', population: '24,000', color: '#10B981' },
+  { nameKey: 'city.roshHaayin', slug: 'rosh-haayin', population: '62,000', color: '#0EA5E9' },
+  { nameKey: 'city.jerusalem', slug: 'jerusalem', population: '970,000', color: '#F59E0B' },
+  { nameKey: 'city.haifa', slug: 'haifa', population: '285,000', color: '#8B5CF6' },
+  { nameKey: 'city.beerSheva', slug: 'beer-sheva', population: '210,000', color: '#EC4899' },
 ];
 
 const FEATURES = [
-  { icon: MapPin, title: 'דיווח מבוסס מיקום', desc: 'סמנו על המפה, צלמו, ותארו את המפגע — תוך שניות', color: '#6366F1' },
-  { icon: Zap, title: 'ניתוב אוטומטי', desc: 'המערכת מזהה את המחלקה האחראית ומנתבת אוטומטית', color: '#F59E0B' },
-  { icon: Bell, title: 'עדכונים בזמן אמת', desc: 'קבלו התראות על כל שינוי סטטוס בפנייה שלכם', color: '#10B981' },
-  { icon: BarChart3, title: 'דשבורד ואנליטיקה', desc: 'מדדי ביצועים, SLA, ומפות חום לקבלת החלטות', color: '#EC4899' },
-  { icon: Shield, title: 'אבטחה ופרטיות', desc: 'הצפנה מלאה, RBAC, ובידוד נתונים בין רשויות', color: '#8B5CF6' },
-  { icon: Globe, title: 'רב-שפתי ונגיש', desc: 'עברית, ערבית, אנגלית — עם תמיכה מלאה בנגישות', color: '#0EA5E9' },
+  { icon: MapPin, titleKey: 'feature.location.title', descKey: 'feature.location.desc', color: '#6366F1' },
+  { icon: Zap, titleKey: 'feature.routing.title', descKey: 'feature.routing.desc', color: '#F59E0B' },
+  { icon: Bell, titleKey: 'feature.updates.title', descKey: 'feature.updates.desc', color: '#10B981' },
+  { icon: BarChart3, titleKey: 'feature.analytics.title', descKey: 'feature.analytics.desc', color: '#EC4899' },
+  { icon: Shield, titleKey: 'feature.security.title', descKey: 'feature.security.desc', color: '#8B5CF6' },
+  { icon: Globe, titleKey: 'feature.multiLang.title', descKey: 'feature.multiLang.desc', color: '#0EA5E9' },
 ];
 
 const STATS = [
-  { value: '50+', label: 'רשויות מקומיות', icon: Building2, color: '#6366F1' },
-  { value: '1.2M+', label: 'דיווחים שטופלו', icon: TrendingUp, color: '#10B981' },
-  { value: '4 שעות', label: 'זמן תגובה ממוצע', icon: Clock, color: '#F59E0B' },
-  { value: '94%', label: 'שביעות רצון', icon: CheckCircle2, color: '#EC4899' },
+  { value: '50+', labelKey: 'stat.cities', icon: Building2, color: '#6366F1' },
+  { value: '1.2M+', labelKey: 'stat.reports', icon: TrendingUp, color: '#10B981' },
+  { valueKey: 'stat.responseValue', labelKey: 'stat.response', icon: Clock, color: '#F59E0B' },
+  { value: '94%', labelKey: 'stat.satisfaction', icon: CheckCircle2, color: '#EC4899' },
 ];
 
 export default function LandingPage() {
   const [activeCity, setActiveCity] = useState(0);
+  const { t, dir } = useI18n();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -44,7 +48,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen" style={{ background: '#080B16' }}>
+    <div className="min-h-screen" dir={dir} style={{ background: '#080B16' }}>
 
       {/* ─── Navbar ─── */}
       <nav style={{
@@ -65,8 +69,9 @@ export default function LandingPage() {
           <span style={{ fontSize: 20, fontWeight: 800, background: 'linear-gradient(135deg,#818CF8,#34D399)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>CityFix</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <Link href="/tel-aviv" style={{ fontSize: 14, color: '#8B95B0', textDecoration: 'none' }}>הדגמה</Link>
-          <Link href="/tel-aviv/auth/login" className="btn-primary" style={{ padding: '8px 20px', fontSize: 14 }}>כניסת עירייה</Link>
+          <LanguageSwitcher compact />
+          <Link href="/tel-aviv" style={{ fontSize: 14, color: '#8B95B0', textDecoration: 'none' }}>{t('common.demo')}</Link>
+          <Link href="/tel-aviv/auth/login" className="btn-primary" style={{ padding: '8px 20px', fontSize: 14 }}>{t('common.municipalityLogin')}</Link>
         </div>
       </nav>
 
@@ -81,25 +86,25 @@ export default function LandingPage() {
             background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.15)',
           }}>
             <Sparkles size={14} color="#818CF8" />
-            <span style={{ fontSize: 12, fontWeight: 600, color: '#A5B4FC' }}>הפלטפורמה המובילה בישראל</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#A5B4FC' }}>{t('landing.badge')}</span>
           </div>
 
           <h1 style={{ fontSize: 'clamp(2.5rem,6vw,4.5rem)', fontWeight: 800, lineHeight: 1.1, marginBottom: 28, letterSpacing: '-0.02em' }}>
-            <span style={{ background: 'linear-gradient(135deg,#818CF8,#6EE7B7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>עיר חכמה</span>
+            <span style={{ background: 'linear-gradient(135deg,#818CF8,#6EE7B7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{t('landing.heroLine1')}</span>
             <br />
-            <span style={{ color: '#F0F2F8' }}>מתחילה בתושבים</span>
+            <span style={{ color: '#F0F2F8' }}>{t('landing.heroLine2')}</span>
           </h1>
 
           <p style={{ fontSize: 18, color: '#8B95B0', maxWidth: 550, margin: '0 auto 40px', lineHeight: 1.7 }}>
-            דווחו על מפגעים עירוניים, עקבו אחרי הטיפול בזמן אמת, ושלחו תביעות תשתית — הכל מפלטפורמה אחת מתקדמת
+            {t('landing.heroBody')}
           </p>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
             <Link href="/tel-aviv/report" className="btn-primary" style={{ fontSize: 16, padding: '14px 36px' }}>
-              <MapPin size={18} /> דווח על מפגע
+              <MapPin size={18} /> {t('landing.reportCta')}
             </Link>
             <Link href="/tel-aviv/map" className="btn-secondary" style={{ fontSize: 16, padding: '14px 36px' }}>
-              <Globe size={18} /> צפה במפה
+              <Globe size={18} /> {t('landing.mapCta')}
             </Link>
           </div>
         </div>
@@ -122,9 +127,9 @@ export default function LandingPage() {
                 <s.icon size={20} color={s.color} />
               </div>
               <div style={{ fontSize: 'clamp(1.5rem,3vw,2.2rem)', fontWeight: 800, color: s.color, marginBottom: 4 }}>
-                {s.value}
+                {'valueKey' in s ? t(s.valueKey as TranslationKey) : s.value}
               </div>
-              <div style={{ fontSize: 13, color: '#566082', fontWeight: 500 }}>{s.label}</div>
+              <div style={{ fontSize: 13, color: '#566082', fontWeight: 500 }}>{t(s.labelKey as TranslationKey)}</div>
             </div>
           ))}
         </div>
@@ -139,12 +144,12 @@ export default function LandingPage() {
               background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.1)',
             }}>
               <Layers size={13} color="#818CF8" />
-              <span style={{ fontSize: 12, fontWeight: 600, color: '#A5B4FC' }}>יכולות מתקדמות</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#A5B4FC' }}>{t('landing.featuresBadge')}</span>
             </div>
             <h2 style={{ fontSize: 'clamp(1.6rem,3.5vw,2.4rem)', fontWeight: 700, color: '#F0F2F8', marginBottom: 10 }}>
-              כל מה שרשות מקומית צריכה
+              {t('landing.featuresTitle')}
             </h2>
-            <p style={{ fontSize: 15, color: '#8B95B0' }}>פלטפורמה אחודה לניהול מפגעים, שירות לתושב ותביעות תשתית</p>
+            <p style={{ fontSize: 15, color: '#8B95B0' }}>{t('landing.featuresBody')}</p>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 20 }}>
@@ -168,8 +173,8 @@ export default function LandingPage() {
                   }}>
                     <f.icon size={24} color={f.color} />
                   </div>
-                  <h3 style={{ fontSize: 17, fontWeight: 700, color: '#F0F2F8', marginBottom: 8 }}>{f.title}</h3>
-                  <p style={{ fontSize: 14, color: '#8B95B0', lineHeight: 1.6 }}>{f.desc}</p>
+                  <h3 style={{ fontSize: 17, fontWeight: 700, color: '#F0F2F8', marginBottom: 8 }}>{t(f.titleKey as TranslationKey)}</h3>
+                  <p style={{ fontSize: 14, color: '#8B95B0', lineHeight: 1.6 }}>{t(f.descKey as TranslationKey)}</p>
                 </div>
               </div>
             ))}
@@ -185,10 +190,10 @@ export default function LandingPage() {
             background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.12)',
           }}>
             <Building2 size={13} color="#34D399" />
-            <span style={{ fontSize: 12, fontWeight: 600, color: '#6EE7B7' }}>רשויות מקומיות</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#6EE7B7' }}>{t('landing.citiesBadge')}</span>
           </div>
-          <h2 style={{ fontSize: 'clamp(1.6rem,3.5vw,2.4rem)', fontWeight: 700, color: '#F0F2F8', marginBottom: 10 }}>בחרו את הרשות שלכם</h2>
-          <p style={{ fontSize: 15, color: '#8B95B0', marginBottom: 40 }}>כל עירייה מקבלת פורטל ממותג ודשבורד ייעודי</p>
+          <h2 style={{ fontSize: 'clamp(1.6rem,3.5vw,2.4rem)', fontWeight: 700, color: '#F0F2F8', marginBottom: 10 }}>{t('landing.citiesTitle')}</h2>
+          <p style={{ fontSize: 15, color: '#8B95B0', marginBottom: 40 }}>{t('landing.citiesBody')}</p>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
             {DEMO_CITIES.map((city, i) => (
@@ -208,9 +213,9 @@ export default function LandingPage() {
                   <Building2 size={20} color={city.color} />
                 </div>
                 <div style={{ flex: 1, textAlign: 'right' }}>
-                  <div style={{ fontWeight: 700, color: '#F0F2F8', fontSize: 15 }}>{city.name}</div>
+                  <div style={{ fontWeight: 700, color: '#F0F2F8', fontSize: 15 }}>{t(city.nameKey as TranslationKey)}</div>
                   <div style={{ fontSize: 12, color: '#566082', marginTop: 3, display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <Users size={11} /> {city.population} תושבים
+                    <Users size={11} /> {city.population} {t('landing.residents')}
                   </div>
                 </div>
                 <ChevronLeft size={16} color="#566082" />
@@ -228,11 +233,11 @@ export default function LandingPage() {
           border: '1px solid rgba(99,102,241,0.1)',
         }}>
           <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle,rgba(99,102,241,0.1),transparent 70%)', pointerEvents: 'none' }} />
-          <h2 style={{ fontSize: 'clamp(1.6rem,3vw,2.2rem)', fontWeight: 700, color: '#F0F2F8', marginBottom: 12 }}>מוכנים לשדרג את השירות לתושב?</h2>
-          <p style={{ fontSize: 15, color: '#8B95B0', marginBottom: 32 }}>הצטרפו לעשרות רשויות שכבר משתמשות ב-CityFix</p>
+          <h2 style={{ fontSize: 'clamp(1.6rem,3vw,2.2rem)', fontWeight: 700, color: '#F0F2F8', marginBottom: 12 }}>{t('landing.ctaTitle')}</h2>
+          <p style={{ fontSize: 15, color: '#8B95B0', marginBottom: 32 }}>{t('landing.ctaBody')}</p>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>
-            <button className="btn-primary" style={{ fontSize: 16, padding: '14px 36px' }}><Sparkles size={18} /> בקשו הדגמה</button>
-            <button className="btn-secondary" style={{ fontSize: 16, padding: '14px 36px' }}>צרו קשר</button>
+            <button className="btn-primary" style={{ fontSize: 16, padding: '14px 36px' }}><Sparkles size={18} /> {t('landing.requestDemo')}</button>
+            <button className="btn-secondary" style={{ fontSize: 16, padding: '14px 36px' }}>{t('landing.contact')}</button>
           </div>
         </div>
       </section>
@@ -249,32 +254,32 @@ export default function LandingPage() {
               <span style={{ fontWeight: 800, color: '#F0F2F8', fontSize: 18 }}>CityFix</span>
             </div>
             <p style={{ fontSize: 14, maxWidth: 250, lineHeight: 1.6 }}>
-              הפלטפורמה המתקדמת בישראל לניהול מפגעים וקשר עם התושב.
+              {t('landing.footerBody')}
             </p>
           </div>
 
           <div style={{ display: 'flex', gap: 64 }}>
             <div>
-              <h4 style={{ color: '#F0F2F8', fontWeight: 600, marginBottom: 16 }}>קישורים שימושיים</h4>
+              <h4 style={{ color: '#F0F2F8', fontWeight: 600, marginBottom: 16 }}>{t('landing.usefulLinks')}</h4>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <li><Link href="/faq" style={{ color: '#8B95B0', textDecoration: 'none', fontSize: 14 }}>שאלות נפוצות (FAQ)</Link></li>
-                <li><Link href="/onboard" style={{ color: '#8B95B0', textDecoration: 'none', fontSize: 14 }}>הרשמת עירייה חדשה</Link></li>
+                <li><Link href="/faq" style={{ color: '#8B95B0', textDecoration: 'none', fontSize: 14 }}>{t('landing.faq')}</Link></li>
+                <li><Link href="/onboard" style={{ color: '#8B95B0', textDecoration: 'none', fontSize: 14 }}>{t('landing.onboard')}</Link></li>
               </ul>
             </div>
             
             <div>
-              <h4 style={{ color: '#F0F2F8', fontWeight: 600, marginBottom: 16 }}>מידע משפטי</h4>
+              <h4 style={{ color: '#F0F2F8', fontWeight: 600, marginBottom: 16 }}>{t('landing.legalInfo')}</h4>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <li><Link href="/terms" style={{ color: '#8B95B0', textDecoration: 'none', fontSize: 14 }}>תקנון ותנאי שימוש</Link></li>
-                <li><Link href="/contract" style={{ color: '#8B95B0', textDecoration: 'none', fontSize: 14 }}>טופס חתימה</Link></li>
-                <li><Link href="/lawyers" style={{ color: '#8B95B0', textDecoration: 'none', fontSize: 14 }}>הוראות לעורכי דין</Link></li>
+                <li><Link href="/terms" style={{ color: '#8B95B0', textDecoration: 'none', fontSize: 14 }}>{t('landing.terms')}</Link></li>
+                <li><Link href="/contract" style={{ color: '#8B95B0', textDecoration: 'none', fontSize: 14 }}>{t('landing.contract')}</Link></li>
+                <li><Link href="/lawyers" style={{ color: '#8B95B0', textDecoration: 'none', fontSize: 14 }}>{t('landing.lawyers')}</Link></li>
               </ul>
             </div>
           </div>
         </div>
 
         <div style={{ maxWidth: 1000, margin: '40px auto 0', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 24, fontSize: 13 }}>
-          © {new Date().getFullYear()} CityFix. כל הזכויות שמורות.
+          © {new Date().getFullYear()} CityFix. {t('landing.copyright')}
         </div>
       </footer>
     </div>
