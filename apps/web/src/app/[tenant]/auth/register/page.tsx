@@ -17,6 +17,7 @@ export default function RegisterPage() {
   const [form, setForm] = useState({
     firstName: '', lastName: '', email: '', phone: '', password: '',
   });
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -171,10 +172,24 @@ export default function RegisterPage() {
             </div>
           </div>
 
+          <div className="flex items-center gap-2 mt-4 mb-2">
+            <input 
+              type="checkbox" 
+              id="terms" 
+              checked={termsAccepted} 
+              onChange={(e) => setTermsAccepted(e.target.checked)} 
+              className="w-4 h-4 rounded cursor-pointer"
+              style={{ accentColor: '#6366F1' }}
+            />
+            <label htmlFor="terms" className="text-xs cursor-pointer" style={{ color: 'var(--color-text-secondary)' }}>
+              אני מסכים/ה ל<Link href={`/${tenant}/terms`} className="underline" style={{ color: '#818CF8' }}>תנאי השימוש ומדיניות הפרטיות</Link>
+            </label>
+          </div>
+
           <button
             type="submit"
-            disabled={loading}
-            className="btn-primary w-full justify-center py-3"
+            disabled={loading || !termsAccepted}
+            className="btn-primary w-full justify-center py-3 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <>

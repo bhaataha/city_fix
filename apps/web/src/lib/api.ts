@@ -1,3 +1,5 @@
+import { useAuthStore } from './store';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4100/api';
 
 interface FetchOptions extends RequestInit {
@@ -8,22 +10,60 @@ async function apiFetch<T = any>(
   endpoint: string,
   options: FetchOptions = {},
 ): Promise<{ success: boolean; data?: T; error?: string; meta?: any }> {
-  const { token, headers: customHeaders, ...rest } = options;
+  let { token, headers: customHeaders, ...rest } = options;
 
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...customHeaders as Record<string, string>,
-  };
-
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+  if (!token) {
+    token = useAuthStore.getState().accessToken || undefined;
   }
 
+  const getHeaders = (currentToken?: string) => {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(customHeaders as Record<string, string>),
+    };
+    if (currentToken) {
+      headers['Authorization'] = `Bearer ${currentToken}`;
+    }
+    return headers;
+  };
+
   try {
-    const res = await fetch(`${API_BASE}/${endpoint}`, {
-      headers,
+    let res = await fetch(`${API_BASE}/${endpoint}`, {
+      headers: getHeaders(token),
       ...rest,
     });
+
+    if (res.status === 401 && useAuthStore.getState().refreshToken && !endpoint.includes('auth/')) {
+      const tenant = useAuthStore.getState().tenantSlug;
+      const refreshToken = useAuthStore.getState().refreshToken;
+      
+      try {
+        const refreshRes = await fetch(`${API_BASE}/${tenant}/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken }),
+        });
+
+        if (refreshRes.ok) {
+          const refreshData = await refreshRes.json();
+          if (refreshData.success && refreshData.data) {
+            const { user, accessToken: newAccessToken, refreshToken: newRefreshToken } = refreshData.data;
+            useAuthStore.getState().setAuth(user, newAccessToken, newRefreshToken, String(tenant));
+            
+            res = await fetch(`${API_BASE}/${endpoint}`, {
+              headers: getHeaders(newAccessToken),
+              ...rest,
+            });
+          } else {
+            useAuthStore.getState().logout();
+          }
+        } else {
+          useAuthStore.getState().logout();
+        }
+      } catch (err) {
+        useAuthStore.getState().logout();
+      }
+    }
 
     const data = await res.json();
 
@@ -145,12 +185,43 @@ export const api = {
     const formData = new FormData();
     files.forEach((f) => formData.append('files', f));
 
+    let currentToken = token || useAuthStore.getState().accessToken;
+
+    const doUpload = async (authToken: string) => fetch(`${API_BASE}/${tenant}/uploads/issues/${issueId}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${authToken}` },
+      body: formData,
+    });
+
     try {
-      const res = await fetch(`${API_BASE}/${tenant}/uploads/issues/${issueId}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
+      let res = await doUpload(currentToken as string);
+
+      if (res.status === 401 && useAuthStore.getState().refreshToken) {
+        const refreshToken = useAuthStore.getState().refreshToken;
+        try {
+          const refreshRes = await fetch(`${API_BASE}/${tenant}/auth/refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refreshToken }),
+          });
+
+          if (refreshRes.ok) {
+            const refreshData = await refreshRes.json();
+            if (refreshData.success && refreshData.data) {
+              const { user, accessToken: newAccessToken, refreshToken: newRefreshToken } = refreshData.data;
+              useAuthStore.getState().setAuth(user, newAccessToken, newRefreshToken, String(tenant));
+              res = await doUpload(newAccessToken);
+            } else {
+              useAuthStore.getState().logout();
+            }
+          } else {
+            useAuthStore.getState().logout();
+          }
+        } catch (err) {
+          useAuthStore.getState().logout();
+        }
+      }
+
       return await res.json();
     } catch (err: any) {
       return { success: false, error: err.message };
