@@ -12,12 +12,12 @@ import {
 } from 'lucide-react';
 
 const DEMO_CITIES = [
+  { nameKey: 'city.global', slug: 'global', population: '9,000,000', color: '#6366F1' },
   { nameKey: 'city.telAviv', slug: 'tel-aviv', population: '460,000', color: '#6366F1' },
   { nameKey: 'city.kafrQasim', slug: 'kafr-qasim', population: '24,000', color: '#10B981' },
   { nameKey: 'city.roshHaayin', slug: 'rosh-haayin', population: '62,000', color: '#0EA5E9' },
   { nameKey: 'city.jerusalem', slug: 'jerusalem', population: '970,000', color: '#F59E0B' },
   { nameKey: 'city.haifa', slug: 'haifa', population: '285,000', color: '#8B5CF6' },
-  { nameKey: 'city.beerSheva', slug: 'beer-sheva', population: '210,000', color: '#EC4899' },
 ];
 
 const FEATURES = [
@@ -100,10 +100,10 @@ export default function LandingPage() {
           </p>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
-            <Link href="/tel-aviv/report" className="btn-primary" style={{ fontSize: 16, padding: '14px 36px' }}>
+            <Link href="/global/report" className="btn-primary" style={{ fontSize: 16, padding: '14px 36px' }}>
               <MapPin size={18} /> {t('landing.reportCta')}
             </Link>
-            <Link href="/tel-aviv/map" className="btn-secondary" style={{ fontSize: 16, padding: '14px 36px' }}>
+            <Link href="/global/map" className="btn-secondary" style={{ fontSize: 16, padding: '14px 36px' }}>
               <Globe size={18} /> {t('landing.mapCta')}
             </Link>
           </div>

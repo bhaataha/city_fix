@@ -8,6 +8,26 @@ export async function seedDatabase(prismaClient?: PrismaClient) {
   console.log('🌱 Seeding CityFix database...\n');
 
   // ─── 1. Tenants ──────────────────────────────────
+  const global = await prisma.tenant.upsert({
+    where: { slug: 'global' },
+    update: {},
+    create: {
+      name: 'CityFix — דיווח ארצי',
+      slug: 'global',
+      primaryColor: '#6366F1',
+      secondaryColor: '#4F46E5',
+      contactEmail: 'support@cityfix.itninja.co.il',
+      website: 'https://cityfix.itninja.co.il',
+      population: 9000000, // Total population
+      slaConfig: {
+        POTHOLE: { response: 12, resolution: 72 },
+        STREETLIGHT: { response: 12, resolution: 72 },
+        WASTE: { response: 12, resolution: 72 },
+        SAFETY: { response: 12, resolution: 72 },
+      },
+    },
+  });
+
   const telAviv = await prisma.tenant.upsert({
     where: { slug: 'tel-aviv' },
     update: {},
@@ -564,7 +584,51 @@ export async function seedDatabase(prismaClient?: PrismaClient) {
     ],
   });
 
+  // ─── 7. Global Tenant Data ────────────────────────
+  const globalDepartments = await Promise.all([
+    prisma.department.upsert({
+      where: { tenantId_name: { tenantId: global.id, name: 'מוקד CityFix ארצי' } },
+      update: {},
+      create: { tenantId: global.id, name: 'מוקד CityFix ארצי', color: '#6366F1', icon: 'globe' },
+    }),
+  ]);
+
+  await Promise.all(
+    categoryData.map((cat, i) =>
+      prisma.serviceCategory.upsert({
+        where: { tenantId_name: { tenantId: global.id, name: cat.name } },
+        update: {},
+        create: {
+          tenantId: global.id,
+          name: cat.name,
+          nameEn: cat.nameEn,
+          nameAr: cat.nameAr,
+          icon: cat.icon,
+          color: cat.color,
+          departmentId: globalDepartments[0].id,
+          slaHours: cat.sla,
+          sortOrder: i,
+        },
+      }),
+    ),
+  );
+
+  const globalAdmin = await prisma.user.upsert({
+    where: { tenantId_email: { tenantId: global.id, email: 'admin@cityfix.itninja.co.il' } },
+    update: {},
+    create: {
+      tenantId: global.id,
+      email: 'admin@cityfix.itninja.co.il',
+      firstName: 'מנהל',
+      lastName: 'מערכת',
+      role: UserRole.SUPER_ADMIN,
+      passwordHash,
+      phone: '050-1111111',
+    },
+  });
+
   console.log('\n🎉 Seed complete!\n');
+  console.log('Global Admin: admin@cityfix.itninja.co.il / Admin123!');
   console.log('Demo accounts (Tel Aviv):');
   console.log('  Admin:    admin@tel-aviv.gov.il / Admin123!');
   console.log('  Manager:  roads@tel-aviv.gov.il / Admin123!');

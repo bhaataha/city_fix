@@ -83,6 +83,7 @@ export const translations = {
     'stat.satisfaction': 'שביעות רצון',
     'stat.responseValue': '4 שעות',
 
+    'city.global': 'CityFix — דיווח ארצי',
     'city.telAviv': 'עיריית תל אביב-יפו',
     'city.kafrQasim': 'עיריית כפר קאסם',
     'city.roshHaayin': 'עיריית ראש העין',
@@ -192,6 +193,7 @@ export const translations = {
     'stat.satisfaction': 'رضا السكان',
     'stat.responseValue': '4 ساعات',
 
+    'city.global': 'CityFix — بلاغ قطري',
     'city.telAviv': 'بلدية تل أبيب-يافا',
     'city.kafrQasim': 'بلدية كفر قاسم',
     'city.roshHaayin': 'بلدية روش هعاين',
@@ -301,6 +303,7 @@ export const translations = {
     'stat.satisfaction': 'satisfaction',
     'stat.responseValue': '4 hours',
 
+    'city.global': 'CityFix — National Reporting',
     'city.telAviv': 'Tel Aviv-Yafo Municipality',
     'city.kafrQasim': 'Kafr Qasim Municipality',
     'city.roshHaayin': 'Rosh HaAyin Municipality',
