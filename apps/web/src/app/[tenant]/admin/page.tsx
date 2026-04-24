@@ -45,23 +45,23 @@ export default function AdminDashboard() {
       const d = apiDash as any;
       return [
         {
-          label: 'פניות פתוחות', value: String(d.openIssues ?? d.stats?.openIssues ?? '247'),
-          change: d.openIssuesChange ?? '+12%', trend: 'up',
+          label: 'פניות פתוחות', value: String(d.openIssues ?? d.stats?.openIssues ?? 0),
+          change: d.openIssuesChange ?? '', trend: 'up',
           icon: AlertTriangle, color: '#818CF8',
         },
         {
-          label: 'חדשות היום', value: String(d.newToday ?? d.stats?.newToday ?? '18'),
-          change: d.newTodayChange ?? '+3', trend: 'up',
+          label: 'חדשות היום', value: String(d.newToday ?? d.stats?.newToday ?? 0),
+          change: d.newTodayChange ?? '', trend: 'up',
           icon: TrendingUp, color: '#F59E0B',
         },
         {
-          label: 'טופלו השבוע', value: String(d.resolvedThisWeek ?? d.stats?.resolvedThisWeek ?? '62'),
-          change: d.resolvedChange ?? '+28%', trend: 'up',
+          label: 'טופלו השבוע', value: String(d.resolvedThisWeek ?? d.stats?.resolvedThisWeek ?? 0),
+          change: d.resolvedChange ?? '', trend: 'up',
           icon: CheckCircle2, color: '#10B981',
         },
         {
-          label: 'SLA ממוצע', value: `${d.avgSla ?? d.stats?.avgSla ?? '2.4'} ימים`,
-          change: d.slaChange ?? '-15%', trend: 'down',
+          label: 'SLA ממוצע', value: `${d.avgSla ?? d.stats?.avgSla ?? 0} ימים`,
+          change: d.slaChange ?? '', trend: 'down',
           icon: Clock, color: '#EF4444',
         },
       ];
