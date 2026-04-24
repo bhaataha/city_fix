@@ -18,15 +18,15 @@ const S = [
 export default function TermsPage() {
   const { tenant } = useParams();
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-surface-0)' }}>
-      <header className="px-6 py-4 flex items-center gap-3" style={{ background: 'rgba(11,15,26,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--color-border)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--color-surface-0)', overflowX: 'hidden' }}>
+      <header className="px-4 sm:px-6 py-3 flex items-center gap-3" style={{ background: 'rgba(11,15,26,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--color-border)' }}>
         <Link href={`/${tenant}`} className="p-2 rounded-lg" style={{ background: 'var(--color-surface-2)' }}>
           <ChevronRight size={18} style={{ color: 'var(--color-text-secondary)' }} />
         </Link>
         <ScrollText size={20} style={{ color: '#818CF8' }} />
         <h1 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>תקנון שימוש</h1>
       </header>
-      <div className="max-w-2xl mx-auto px-6 py-6 space-y-6">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 sm:py-6 space-y-5 sm:space-y-6">
         <div className="glass-card p-4 flex items-center gap-4">
           <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--color-text-muted)' }}><Calendar size={14} /> עדכון אחרון: אפריל 2026</div>
           <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--color-text-muted)' }}><Scale size={14} /> גרסה 1.0</div>

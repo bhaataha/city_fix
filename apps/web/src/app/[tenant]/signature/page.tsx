@@ -86,15 +86,15 @@ export default function SignaturePage() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-surface-0)' }}>
-      <header className="px-6 py-4 flex items-center gap-3" style={{ background: 'rgba(11,15,26,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--color-border)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--color-surface-0)', overflowX: 'hidden' }}>
+      <header className="px-4 sm:px-6 py-3 flex items-center gap-3" style={{ background: 'rgba(11,15,26,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--color-border)' }}>
         <Link href={`/${tenant}`} className="p-2 rounded-lg" style={{ background: 'var(--color-surface-2)' }}>
           <ChevronRight size={18} style={{ color: 'var(--color-text-secondary)' }} />
         </Link>
         <PenTool size={20} style={{ color: '#818CF8' }} />
         <h1 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>חתימה דיגיטלית</h1>
       </header>
-      <div className="max-w-2xl mx-auto px-6 py-6 space-y-6">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 sm:py-6 space-y-5 sm:space-y-6">
         <div className="glass-card p-4">
           <p className="text-sm mb-1" style={{ color: 'var(--color-text-secondary)' }}>
             חתימה דיגיטלית נדרשת לצורך הגשת תביעות תשתית ותצהירים רשמיים.

@@ -72,10 +72,10 @@ export default function ContactPage() {
   const { tenant } = useParams();
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-surface-0)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--color-surface-0)', overflowX: 'hidden' }}>
       {/* Header */}
       <header
-        className="px-6 py-4 flex items-center gap-3"
+        className="px-4 sm:px-6 py-3 flex items-center gap-3"
         style={{
           background: 'rgba(11,15,26,0.85)',
           backdropFilter: 'blur(20px)',
@@ -94,7 +94,7 @@ export default function ContactPage() {
         </h1>
       </header>
 
-      <div className="max-w-2xl mx-auto px-6 py-6 space-y-6">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 sm:py-6 space-y-5 sm:space-y-6">
         {/* Contact channels */}
         <section>
           <h2 className="font-bold mb-3" style={{ color: 'var(--color-text-primary)' }}>

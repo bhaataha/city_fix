@@ -31,15 +31,15 @@ const CLAIM_STEPS = [
 export default function GuidePage() {
   const { tenant } = useParams();
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-surface-0)' }}>
-      <header className="px-6 py-4 flex items-center gap-3" style={{ background: 'rgba(11,15,26,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--color-border)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--color-surface-0)', overflowX: 'hidden' }}>
+      <header className="px-4 sm:px-6 py-3 flex items-center gap-3" style={{ background: 'rgba(11,15,26,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--color-border)' }}>
         <Link href={`/${tenant}`} className="p-2 rounded-lg" style={{ background: 'var(--color-surface-2)' }}>
           <ChevronRight size={18} style={{ color: 'var(--color-text-secondary)' }} />
         </Link>
         <BookOpen size={20} style={{ color: '#818CF8' }} />
         <h1 className="text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>הוראות שימוש</h1>
       </header>
-      <div className="max-w-2xl mx-auto px-6 py-6 space-y-8">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-5 sm:py-6 space-y-6 sm:space-y-8">
         {/* How to report */}
         <section>
           <h2 className="font-bold text-lg mb-4" style={{ color: 'var(--color-text-primary)' }}>🔹 איך מדווחים על מפגע?</h2>

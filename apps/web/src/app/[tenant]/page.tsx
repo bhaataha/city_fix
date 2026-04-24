@@ -1,7 +1,9 @@
 'use client';
 
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useIssues } from '@/lib/hooks';
 import {
   MapPin, FileText, Map, Bell, Phone,
   HelpCircle, ChevronLeft, AlertTriangle,
@@ -68,14 +70,49 @@ const QUICK_ACTIONS = [
   },
 ];
 
-const RECENT_UPDATES = [
-  { id: 1, number: 'CF-2026-00312', category: 'בור בכביש', status: 'בטיפול', color: '#FBBF24', time: 'לפני 2 שעות' },
-  { id: 2, number: 'CF-2026-00298', category: 'פנס רחוב תקול', status: 'טופל', color: '#34D399', time: 'לפני 5 שעות' },
-  { id: 3, number: 'CF-2026-00284', category: 'פסולת / גזם', status: 'חדש', color: '#818CF8', time: 'אתמול' },
-];
+/* ─── Status color mapping ──────────────────────── */
+const STATUS_MAP: Record<string, { label: string; color: string }> = {
+  NEW: { label: 'חדש', color: '#818CF8' },
+  OPEN: { label: 'פתוח', color: '#818CF8' },
+  IN_REVIEW: { label: 'בבדיקה', color: '#F59E0B' },
+  ASSIGNED: { label: 'הוקצה', color: '#0EA5E9' },
+  IN_PROGRESS: { label: 'בטיפול', color: '#FBBF24' },
+  RESOLVED: { label: 'טופל', color: '#34D399' },
+  CLOSED: { label: 'נסגר', color: '#6B7280' },
+  REJECTED: { label: 'נדחה', color: '#EF4444' },
+};
+
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'עכשיו';
+  if (mins < 60) return `לפני ${mins} דק'`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `לפני ${hrs} שעות`;
+  const days = Math.floor(hrs / 24);
+  if (days === 1) return 'אתמול';
+  return `לפני ${days} ימים`;
+}
 
 export default function CitizenHomePage() {
   const { tenant } = useParams();
+  const { data: issuesData, loading: issuesLoading } = useIssues({ limit: '5', sort: 'createdAt', order: 'desc' });
+
+  const recentIssues = useMemo(() => {
+    if (!issuesData) return [];
+    const list = Array.isArray(issuesData) ? issuesData : (issuesData as any)?.data || (issuesData as any)?.items || [];
+    return list.slice(0, 5).map((issue: any) => {
+      const st = STATUS_MAP[issue.status] || { label: issue.status || '—', color: '#818CF8' };
+      return {
+        id: issue.id,
+        number: issue.referenceNumber || `#${String(issue.id).slice(0, 8)}`,
+        category: issue.category?.name || issue.categoryName || '—',
+        status: st.label,
+        color: st.color,
+        time: issue.createdAt ? timeAgo(issue.createdAt) : '',
+      };
+    });
+  }, [issuesData]);
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--color-surface-0)', overflowX: 'hidden' }}>
@@ -193,10 +230,12 @@ export default function CitizenHomePage() {
         </div>
 
         <div className="space-y-2">
-          {RECENT_UPDATES.map((update) => (
-            <div
+          {recentIssues.length > 0 ? recentIssues.map((update: any) => (
+            <Link
               key={update.id}
+              href={`/${tenant}/issues/${update.id}`}
               className="glass-card p-3 sm:p-4 flex items-center gap-3"
+              style={{ textDecoration: 'none' }}
             >
               <div
                 className="w-1 h-10 rounded-full flex-shrink-0"
@@ -219,8 +258,14 @@ export default function CitizenHomePage() {
                 </div>
               </div>
               <ChevronLeft size={16} className="flex-shrink-0" style={{ color: 'var(--color-text-muted)' }} />
+            </Link>
+          )) : (
+            <div className="glass-card p-4 text-center">
+              <div className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                {issuesLoading ? 'טוען עדכונים...' : 'אין דיווחים אחרונים'}
+              </div>
             </div>
-          ))}
+          )}
         </div>
       </section>
 
