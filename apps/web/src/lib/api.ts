@@ -1,6 +1,6 @@
 import { useAuthStore } from './store';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4100/api';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4188/api';
 
 interface FetchOptions extends RequestInit {
   token?: string;

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
@@ -6,6 +6,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
 import { MailModule } from '../mail/mail.module';
+import { TenantMiddleware } from '../../common/middleware/tenant.middleware';
 
 @Module({
   imports: [
@@ -23,4 +24,9 @@ import { MailModule } from '../mail/mail.module';
   providers: [AuthService, JwtStrategy],
   exports: [AuthService, JwtModule],
 })
-export class AuthModule {}
+export class AuthModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(TenantMiddleware).forRoutes(AuthController);
+  }
+}
+

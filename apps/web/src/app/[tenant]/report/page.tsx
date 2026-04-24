@@ -8,8 +8,9 @@ import {
   ArrowRight, MapPin, Camera, Upload, AlertTriangle,
   CheckCircle2, ChevronLeft, X, Loader2, Send, Info
 } from 'lucide-react';
-import { DEFAULT_CATEGORIES, URGENCY_LABELS } from '@cityfix/shared';
+import { URGENCY_LABELS } from '@cityfix/shared';
 import { api } from '@/lib/api';
+import { useCategories } from '@/lib/hooks';
 import { useAuthStore } from '@/lib/store';
 
 const MapView = dynamic(() => import('@/components/MapView'), {
@@ -26,9 +27,10 @@ type Step = 'category' | 'location' | 'details' | 'review';
 export default function ReportPage() {
   const { tenant } = useParams();
   const router = useRouter();
+  const { data: apiCategories, loading: categoriesLoading, error: categoriesError } = useCategories();
 
   const [step, setStep] = useState<Step>('category');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [description, setDescription] = useState('');
   const [urgency, setUrgency] = useState('NORMAL');
   const [isDanger, setIsDanger] = useState(false);
@@ -50,10 +52,11 @@ export default function ReportPage() {
   ];
 
   const currentStepIndex = steps.findIndex((s) => s.key === step);
-  const category = DEFAULT_CATEGORIES.find((c) => c.name === selectedCategory);
+  const categories = (apiCategories && Array.isArray(apiCategories)) ? apiCategories : [];
+  const category = categories.find((c: any) => c.id === selectedCategoryId);
 
   const handleSubmit = async () => {
-    if (!category) return;
+    if (!category || !selectedCategoryId) return;
     setSubmitting(true);
     
     // Parse coordinates from picker or use generic center if empty
@@ -61,7 +64,7 @@ export default function ReportPage() {
     const lng = pickerPin?.lng || 34.7818;
 
     const payload = {
-      categoryId: selectedCategory || category.name,
+      categoryId: selectedCategoryId,
       description,
       address,
       latitude: lat,
@@ -194,18 +197,37 @@ export default function ReportPage() {
             בחרו את הקטגוריה המתאימה ביותר
           </p>
 
+          {categoriesLoading && (
+            <div className="glass-card p-4 mb-4 flex items-center gap-3">
+              <Loader2 size={18} className="animate-spin" style={{ color: '#818CF8' }} />
+              <span className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>טוען קטגוריות...</span>
+            </div>
+          )}
+
+          {categoriesError && (
+            <div
+              className="rounded-xl p-3 mb-4 flex items-start gap-2"
+              style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}
+            >
+              <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" style={{ color: '#EF4444' }} />
+              <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                לא ניתן לטעון קטגוריות מהרשות. בדקו שה-API פעיל ונסו שוב.
+              </span>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
-            {DEFAULT_CATEGORIES.map((cat) => (
+            {categories.map((cat: any) => (
               <button
-                key={cat.name}
+                key={cat.id}
                 onClick={() => {
-                  setSelectedCategory(cat.name);
+                  setSelectedCategoryId(cat.id);
                   setStep('location');
                 }}
                 className="glass-card p-4 text-right flex items-start gap-3 transition-all"
                 style={{
-                  borderColor: selectedCategory === cat.name ? `${cat.color}80` : undefined,
-                  background: selectedCategory === cat.name ? `${cat.color}08` : undefined,
+                  borderColor: selectedCategoryId === cat.id ? `${cat.color}80` : undefined,
+                  background: selectedCategoryId === cat.id ? `${cat.color}08` : undefined,
                 }}
               >
                 <div
@@ -437,7 +459,7 @@ export default function ReportPage() {
                   </div>
                 )}
                 <span className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                  {selectedCategory}
+                  {category?.name}
                 </span>
               </div>
             </div>

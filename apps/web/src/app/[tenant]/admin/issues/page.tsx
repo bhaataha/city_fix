@@ -72,9 +72,9 @@ export default function AdminIssuesPage() {
         status: issue.status || 'NEW',
         statusLabel: STATUS_LABEL[issue.status] || issue.status,
         statusColor: STATUS_COLOR[issue.status] || '#818CF8',
-        urgency: issue.priority || 'NORMAL',
-        urgencyColor: URGENCY_COLOR[issue.priority] || '#3B82F6',
-        dept: issue.department?.name || issue.departmentName || '',
+        urgency: issue.urgency || 'NORMAL',
+        urgencyColor: URGENCY_COLOR[issue.urgency] || '#3B82F6',
+        dept: issue.assignedDept?.name || issue.department?.name || issue.departmentName || '',
         reporter: issue.reporter
           ? `${issue.reporter.firstName || ''} ${issue.reporter.lastName || ''}`.trim()
           : issue.user
