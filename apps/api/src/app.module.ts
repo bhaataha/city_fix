@@ -16,6 +16,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { MailModule } from './modules/mail/mail.module';
 import { AdoptionModule } from './modules/adoption/adoption.module';
+import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { HealthController } from './health.controller';
 import { DevController } from './dev.controller';
 
@@ -52,6 +53,7 @@ import { DevController } from './dev.controller';
     NotificationsModule,
     UploadsModule,
     AdoptionModule,
+    IntegrationsModule,
   ],
   controllers: [HealthController, DevController],
 })

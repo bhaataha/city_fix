@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { IntegrationsService } from '../integrations/integrations.service';
 
 /** Event types for internal categorization (stored in `data` JSON field) */
 export enum NotificationEvent {
@@ -26,7 +27,10 @@ interface CreateNotificationDto {
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly integrationsService: IntegrationsService,
+  ) {}
 
   async create(dto: CreateNotificationDto) {
     try {
@@ -114,6 +118,16 @@ export class NotificationsService {
       `${categoryName} — ${issue.address || 'ללא כתובת'}`,
       { issueId: issue.id, reportNumber: issue.reportNumber },
     );
+    await this.integrationsService.emitWebhookIfEnabled(tenantId, 'ISSUE_CREATED', {
+      issueId: issue.id,
+      reportNumber: issue.reportNumber,
+      status: issue.status,
+      categoryName,
+      isOrphaned: issue.isOrphaned,
+      latitude: issue.latitude,
+      longitude: issue.longitude,
+      createdAt: issue.createdAt,
+    });
   }
 
   async onIssueStatusChanged(tenantId: string, issue: any, oldStatus: string, newStatus: string) {
@@ -127,6 +141,13 @@ export class NotificationsService {
         data: { issueId: issue.id, oldStatus, newStatus },
       });
     }
+    await this.integrationsService.emitWebhookIfEnabled(tenantId, 'ISSUE_STATUS_CHANGED', {
+      issueId: issue.id,
+      reportNumber: issue.reportNumber,
+      oldStatus,
+      newStatus,
+      updatedAt: issue.updatedAt,
+    });
   }
 
   async onClaimCreated(tenantId: string, claim: any) {
@@ -137,6 +158,13 @@ export class NotificationsService {
       `${claim.title || 'תביעה חדשה'} — ₪${claim.amount?.toLocaleString() || '0'}`,
       { claimId: claim.id },
     );
+    await this.integrationsService.emitWebhookIfEnabled(tenantId, 'CLAIM_CREATED', {
+      claimId: claim.id,
+      claimNumber: claim.claimNumber,
+      status: claim.status,
+      claimType: claim.claimType,
+      createdAt: claim.createdAt,
+    });
   }
 
   async onClaimStatusChanged(tenantId: string, claim: any, oldStatus: string, newStatus: string) {
@@ -150,5 +178,12 @@ export class NotificationsService {
         data: { claimId: claim.id, oldStatus, newStatus },
       });
     }
+    await this.integrationsService.emitWebhookIfEnabled(tenantId, 'CLAIM_STATUS_CHANGED', {
+      claimId: claim.id,
+      claimNumber: claim.claimNumber,
+      oldStatus,
+      newStatus,
+      updatedAt: claim.updatedAt,
+    });
   }
 }

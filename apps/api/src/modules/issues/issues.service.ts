@@ -44,14 +44,30 @@ export class IssuesService {
     let resolvedTenantId = tenantId;
     let isOrphaned = false;
     let originalTenantId: string | null = null;
+    let pendingMunicipality:
+      | { tenantId: string; slug: string; name: string }
+      | undefined;
 
     if (!resolvedTenantId) {
       const resolved = await this.geoResolver.resolve(data.latitude, data.longitude);
-      resolvedTenantId = resolved.tenantId;
-      originalTenantId = resolved.tenantId;
 
-      if (resolved.matchType === 'public-fallback' || !resolved.isClaimed) {
+      // Claimed municipality => directly assigned tenant workflow.
+      // Unclaimed municipality or no municipality => PUBLIC orphan workflow.
+      if (resolved.matchType === 'public-fallback') {
+        resolvedTenantId = resolved.tenantId;
         isOrphaned = true;
+      } else if (!resolved.isClaimed) {
+        const publicTenant = await this.geoResolver.getOrCreatePublicTenant();
+        resolvedTenantId = publicTenant.id;
+        originalTenantId = resolved.tenantId;
+        isOrphaned = true;
+        pendingMunicipality = {
+          tenantId: resolved.tenantId,
+          slug: resolved.slug,
+          name: resolved.name,
+        };
+      } else {
+        resolvedTenantId = resolved.tenantId;
       }
     }
 
@@ -117,6 +133,13 @@ export class IssuesService {
         status: initialStatus,
         isOrphaned,
         visibility: 'PUBLIC',
+        metadata: isOrphaned && pendingMunicipality
+          ? {
+              pendingMunicipalityId: pendingMunicipality.tenantId,
+              pendingMunicipalitySlug: pendingMunicipality.slug,
+              pendingMunicipalityName: pendingMunicipality.name,
+            }
+          : undefined,
         statusHistory: {
           create: {
             fromStatus: null,
@@ -155,7 +178,9 @@ export class IssuesService {
       issue,
       isOrphaned,
       adoptionStatus: isOrphaned
-        ? `הדיווח נשמר במערכת ויחכה שעירייה תאמץ אותו`
+        ? pendingMunicipality
+          ? `הדיווח נשמר לציבור וימתין לאימוץ של ${pendingMunicipality.name}`
+          : `הדיווח נשמר לציבור וימתין לאימוץ עירייה`
         : undefined,
       nearbyDuplicates: nearbyIssues.length > 0 ? nearbyIssues : undefined,
     };

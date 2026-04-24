@@ -78,6 +78,26 @@ async function apiFetch<T = any>(
 }
 
 export const api = {
+  // Public civic layer
+  getPublicIssues: (params?: Record<string, string>) => {
+    const query = params ? '?' + new URLSearchParams(params).toString() : '';
+    return apiFetch(`issues${query}`);
+  },
+  resolvePublicLocation: (lat: number, lng: number) =>
+    apiFetch(`issues/resolve?lat=${lat}&lng=${lng}`),
+  createPublicIssue: (data: any, token?: string) =>
+    apiFetch('issues', { method: 'POST', body: JSON.stringify(data), token }),
+  upvoteIssue: (issueId: string, token: string) =>
+    apiFetch(`issues/${issueId}/upvote`, { method: 'POST', token }),
+  removeIssueUpvote: (issueId: string, token: string) =>
+    apiFetch(`issues/${issueId}/upvote`, { method: 'DELETE', token }),
+  followIssue: (issueId: string, token: string) =>
+    apiFetch(`issues/${issueId}/follow`, { method: 'POST', token }),
+  unfollowIssue: (issueId: string, token: string) =>
+    apiFetch(`issues/${issueId}/follow`, { method: 'DELETE', token }),
+  getIssueEngagement: (issueId: string, token?: string) =>
+    apiFetch(`issues/${issueId}/engagement`, { token }),
+
   // Tenants
   getTenants: () => apiFetch('tenants'),
   getTenant: (slug: string) => apiFetch(`tenants/${slug}`),
@@ -133,6 +153,20 @@ export const api = {
   // Dashboard
   getDashboard: (tenant: string, token: string) =>
     apiFetch(`${tenant}/dashboard`, { token }),
+  getIntegrations: (tenant: string, token: string) =>
+    apiFetch(`${tenant}/integrations`, { token }),
+  updateIntegrations: (tenant: string, token: string, data: any) =>
+    apiFetch(`${tenant}/integrations`, { method: 'PATCH', token, body: JSON.stringify(data) }),
+  testIntegrationsWebhook: (tenant: string, token: string) =>
+    apiFetch(`${tenant}/integrations/test-webhook`, { method: 'POST', token }),
+  getAdoptionOrphans: (token: string) =>
+    apiFetch('admin/adoption/orphans', { token }),
+  adoptOrphans: (token: string, issueIds?: string[]) =>
+    apiFetch('admin/adoption/adopt', {
+      method: 'POST',
+      token,
+      body: JSON.stringify(issueIds?.length ? { issueIds } : {}),
+    }),
 
   // Users / Team
   getProfile: (tenant: string, token: string) =>

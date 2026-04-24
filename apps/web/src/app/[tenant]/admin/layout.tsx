@@ -5,7 +5,7 @@ import { useRouter, useParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
   BarChart3, AlertTriangle, MapPin, Users, Layers,
-  FileText, Settings, Building2, LogOut, X, Menu,
+  FileText, Settings, Building2, LogOut, X, Menu, BellRing,
   ChevronLeft
 } from 'lucide-react';
 import { useAuthStore, useAppStore } from '@/lib/store';
@@ -14,10 +14,12 @@ import { AuthGuard } from '@/components/AuthGuard';
 const SIDEBAR_LINKS = [
   { icon: BarChart3, label: 'דשבורד', href: 'admin' },
   { icon: AlertTriangle, label: 'פניות', href: 'admin/issues' },
+  { icon: Building2, label: 'אימוץ דיווחים', href: 'admin/adoption' },
   { icon: MapPin, label: 'מפה', href: 'map' },
   { icon: Users, label: 'צוות', href: 'admin/team' },
   { icon: Layers, label: 'מחלקות', href: 'admin/departments' },
   { icon: FileText, label: 'תביעות', href: 'admin/claims' },
+  { icon: BellRing, label: 'אינטגרציות', href: 'admin/integrations' },
   { icon: Settings, label: 'הגדרות', href: 'admin/settings' },
 ];
 

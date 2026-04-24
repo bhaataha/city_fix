@@ -102,6 +102,13 @@ export function useIssues(params?: Record<string, string>) {
   );
 }
 
+export function usePublicIssues(params?: Record<string, string>) {
+  return useApiData(
+    () => api.getPublicIssues(params),
+    [JSON.stringify(params)],
+  );
+}
+
 export function useIssue(id: string) {
   const tenant = useTenant();
   return useApiData(
@@ -152,6 +159,14 @@ export function useDashboard() {
   return useApiData(
     () => api.getDashboard(tenant, accessToken || ''),
     [tenant, accessToken],
+  );
+}
+
+export function useAdoptionOrphans() {
+  const { accessToken } = useAuthStore();
+  return useApiData(
+    () => api.getAdoptionOrphans(accessToken || ''),
+    [accessToken],
   );
 }
 

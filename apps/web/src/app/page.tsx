@@ -100,10 +100,10 @@ export default function LandingPage() {
           </p>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
-            <Link href="/global/report" className="btn-primary" style={{ fontSize: 16, padding: '14px 36px' }}>
+            <Link href="/report" className="btn-primary" style={{ fontSize: 16, padding: '14px 36px' }}>
               <MapPin size={18} /> {t('landing.reportCta')}
             </Link>
-            <Link href="/global/map" className="btn-secondary" style={{ fontSize: 16, padding: '14px 36px' }}>
+            <Link href="/map" className="btn-secondary" style={{ fontSize: 16, padding: '14px 36px' }}>
               <Globe size={18} /> {t('landing.mapCta')}
             </Link>
           </div>
