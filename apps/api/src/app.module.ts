@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { PrismaModule } from './common/prisma/prisma.module';
+import { GeoModule } from './common/geo/geo.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
 import { UsersModule } from './modules/users/users.module';
@@ -14,6 +15,7 @@ import { SettingsModule } from './modules/settings/settings.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { MailModule } from './modules/mail/mail.module';
+import { AdoptionModule } from './modules/adoption/adoption.module';
 import { HealthController } from './health.controller';
 import { DevController } from './dev.controller';
 
@@ -34,6 +36,7 @@ import { DevController } from './dev.controller';
 
     // Core
     PrismaModule,
+    GeoModule,
     MailModule,
 
     // Feature modules
@@ -48,6 +51,7 @@ import { DevController } from './dev.controller';
     SettingsModule,
     NotificationsModule,
     UploadsModule,
+    AdoptionModule,
   ],
   controllers: [HealthController, DevController],
 })

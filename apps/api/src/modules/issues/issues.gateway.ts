@@ -62,4 +62,28 @@ export class IssuesGateway implements OnGatewayConnection, OnGatewayDisconnect {
   notifyIssueCreated(tenant: string, issue: any) {
     this.server.to(`tenant_${tenant}`).emit('issueCreated', { issue });
   }
+
+  // ─── Civic / public layer rooms ───────────────────────
+
+  @SubscribeMessage('joinPublicFeed')
+  handleJoinPublicFeed(@ConnectedSocket() client: Socket) {
+    client.join('public_feed');
+    this.logger.log(`Client ${client.id} joined public_feed`);
+  }
+
+  /** Push a newly created issue into the global civic timeline. */
+  notifyPublicFeed(issue: any) {
+    this.server.to('public_feed').emit('publicIssueCreated', { issue });
+  }
+
+  /** Push lightweight engagement updates (upvote/follow counters). */
+  notifyIssueEngagement(
+    tenant: string,
+    issueId: string,
+    payload: { upvoteCount?: number; followerCount?: number; commentCount?: number },
+  ) {
+    this.server.to(`tenant_${tenant}`).emit('issueEngagement', { issueId, ...payload });
+    this.server.to(`issue_${issueId}`).emit('issueEngagement', { issueId, ...payload });
+    this.server.to('public_feed').emit('issueEngagement', { issueId, ...payload });
+  }
 }

@@ -8,38 +8,66 @@ export async function seedDatabase(prismaClient?: PrismaClient) {
   console.log('🌱 Seeding CityFix database...\n');
 
   // ─── 1. Tenants ──────────────────────────────────
-  const global = await prisma.tenant.upsert({
-    where: { slug: 'global' },
-    update: {},
+  // The PUBLIC tenant is the singleton container for orphan citizen reports
+  // — every report whose location does NOT match a claimed municipality
+  // lands here and waits for adoption.
+  const publicTenant = await prisma.tenant.upsert({
+    where: { slug: 'public' },
+    update: { kind: 'PUBLIC', isClaimed: false },
     create: {
-      name: 'CityFix — דיווח ארצי',
-      slug: 'global',
+      name: 'CityFix — שכבה ציבורית',
+      slug: 'public',
+      kind: 'PUBLIC',
+      isClaimed: false,
       primaryColor: '#6366F1',
       secondaryColor: '#4F46E5',
       contactEmail: 'support@cityfix.itninja.co.il',
       website: 'https://cityfix.itninja.co.il',
-      population: 9000000, // Total population
-      slaConfig: {
-        POTHOLE: { response: 12, resolution: 72 },
-        STREETLIGHT: { response: 12, resolution: 72 },
-        WASTE: { response: 12, resolution: 72 },
-        SAFETY: { response: 12, resolution: 72 },
-      },
+      population: 9000000,
+    },
+  });
+
+  // Legacy "global" tenant — kept for backward compat; redirects/UI may map it
+  // to PUBLIC. New code should use `publicTenant` (slug=public).
+  const global = await prisma.tenant.upsert({
+    where: { slug: 'global' },
+    update: { kind: 'PUBLIC' },
+    create: {
+      name: 'CityFix — דיווח ארצי (legacy)',
+      slug: 'global',
+      kind: 'PUBLIC',
+      isClaimed: false,
+      primaryColor: '#6366F1',
+      secondaryColor: '#4F46E5',
+      contactEmail: 'support@cityfix.itninja.co.il',
+      population: 9000000,
     },
   });
 
   const telAviv = await prisma.tenant.upsert({
     where: { slug: 'tel-aviv' },
-    update: {},
+    update: {
+      kind: 'MUNICIPALITY',
+      isClaimed: true,
+      centerLat: 32.0853,
+      centerLng: 34.7818,
+      radiusKm: 8,
+    },
     create: {
       name: 'עיריית תל אביב-יפו',
       slug: 'tel-aviv',
+      kind: 'MUNICIPALITY',
+      isClaimed: true,
+      claimedAt: new Date(),
       primaryColor: '#2563EB',
       secondaryColor: '#1E40AF',
       contactEmail: 'info@tel-aviv.gov.il',
       contactPhone: '106',
       website: 'https://www.tel-aviv.gov.il',
       population: 460613,
+      centerLat: 32.0853,
+      centerLng: 34.7818,
+      radiusKm: 8,
       slaConfig: {
         POTHOLE: { response: 4, resolution: 48 },
         STREETLIGHT: { response: 2, resolution: 24 },
@@ -297,6 +325,45 @@ export async function seedDatabase(prismaClient?: PrismaClient) {
 
   console.log('✅ Tenants created:', telAviv.slug, demoCity.slug, haifa.slug, kafrQasim.slug, roshHaayin.slug, jerusalem.slug, rishonLezion.slug, petahTikva.slug, ashdod.slug, netanya.slug, beersheba.slug, holon.slug, bneiBrak.slug, ramatGan.slug, ashkelon.slug, rehovot.slug, batYam.slug, beitShemesh.slug);
 
+  // ─── 1b. Geographic envelopes for the geo-resolver / adoption ────
+  // Quick centroid + radius bounding circles. Polygons can be added later.
+  const geoEnvelopes: Array<{ slug: string; lat: number; lng: number; radiusKm: number }> = [
+    { slug: 'haifa',         lat: 32.7940, lng: 34.9896, radiusKm: 10 },
+    { slug: 'kafr-qasim',    lat: 32.1149, lng: 34.9760, radiusKm: 4 },
+    { slug: 'rosh-haayin',   lat: 32.0833, lng: 34.9500, radiusKm: 5 },
+    { slug: 'jerusalem',     lat: 31.7683, lng: 35.2137, radiusKm: 15 },
+    { slug: 'rishon-lezion', lat: 31.9710, lng: 34.7892, radiusKm: 9 },
+    { slug: 'petah-tikva',   lat: 32.0840, lng: 34.8878, radiusKm: 8 },
+    { slug: 'ashdod',        lat: 31.8044, lng: 34.6553, radiusKm: 8 },
+    { slug: 'netanya',       lat: 32.3329, lng: 34.8599, radiusKm: 9 },
+    { slug: 'beersheba',     lat: 31.2530, lng: 34.7915, radiusKm: 10 },
+    { slug: 'holon',         lat: 32.0167, lng: 34.7792, radiusKm: 6 },
+    { slug: 'bnei-brak',     lat: 32.0807, lng: 34.8338, radiusKm: 4 },
+    { slug: 'ramat-gan',     lat: 32.0680, lng: 34.8242, radiusKm: 5 },
+    { slug: 'ashkelon',      lat: 31.6688, lng: 34.5742, radiusKm: 8 },
+    { slug: 'rehovot',       lat: 31.8967, lng: 34.8113, radiusKm: 6 },
+    { slug: 'bat-yam',       lat: 32.0167, lng: 34.7500, radiusKm: 4 },
+    { slug: 'beit-shemesh',  lat: 31.7500, lng: 34.9863, radiusKm: 6 },
+    { slug: 'demo',          lat: 32.0500, lng: 34.8000, radiusKm: 5 },
+  ];
+
+  await Promise.all(
+    geoEnvelopes.map((g) =>
+      prisma.tenant.update({
+        where: { slug: g.slug },
+        data: {
+          kind: 'MUNICIPALITY',
+          // These cities are pre-seeded as *unclaimed* — they will flip to
+          // `isClaimed=true` only when an admin adopts orphans for them.
+          centerLat: g.lat,
+          centerLng: g.lng,
+          radiusKm: g.radiusKm,
+        },
+      }).catch(() => null), // ignore if the slug doesn't exist
+    ),
+  );
+  console.log('✅ Geographic envelopes set for', geoEnvelopes.length, 'municipalities');
+
   // ─── 2. Departments (Tel Aviv) ───────────────────
   const departments = await Promise.all([
     prisma.department.upsert({
@@ -368,7 +435,7 @@ export async function seedDatabase(prismaClient?: PrismaClient) {
   const passwordHash = await bcrypt.hash('Admin123!', 10);
 
   const admin = await prisma.user.upsert({
-    where: { tenantId_email: { tenantId: telAviv.id, email: 'admin@tel-aviv.gov.il' } },
+    where: { email: 'admin@tel-aviv.gov.il' },
     update: {},
     create: {
       tenantId: telAviv.id,
@@ -382,7 +449,7 @@ export async function seedDatabase(prismaClient?: PrismaClient) {
   });
 
   const deptManager = await prisma.user.upsert({
-    where: { tenantId_email: { tenantId: telAviv.id, email: 'roads@tel-aviv.gov.il' } },
+    where: { email: 'roads@tel-aviv.gov.il' },
     update: {},
     create: {
       tenantId: telAviv.id,
@@ -396,7 +463,7 @@ export async function seedDatabase(prismaClient?: PrismaClient) {
   });
 
   const citizen = await prisma.user.upsert({
-    where: { tenantId_email: { tenantId: telAviv.id, email: 'citizen@example.com' } },
+    where: { email: 'citizen@example.com' },
     update: {},
     create: {
       tenantId: telAviv.id,
@@ -524,7 +591,7 @@ export async function seedDatabase(prismaClient?: PrismaClient) {
   );
 
   const demoAdmin = await prisma.user.upsert({
-    where: { tenantId_email: { tenantId: demoCity.id, email: 'admin@demo.gov.il' } },
+    where: { email: 'admin@demo.gov.il' },
     update: {},
     create: {
       tenantId: demoCity.id,
@@ -538,7 +605,7 @@ export async function seedDatabase(prismaClient?: PrismaClient) {
   });
 
   const demoCitizen = await prisma.user.upsert({
-    where: { tenantId_email: { tenantId: demoCity.id, email: 'citizen@demo.com' } },
+    where: { email: 'citizen@demo.com' },
     update: {},
     create: {
       tenantId: demoCity.id,
@@ -614,7 +681,7 @@ export async function seedDatabase(prismaClient?: PrismaClient) {
   );
 
   const globalAdmin = await prisma.user.upsert({
-    where: { tenantId_email: { tenantId: global.id, email: 'admin@cityfix.itninja.co.il' } },
+    where: { email: 'admin@cityfix.itninja.co.il' },
     update: {},
     create: {
       tenantId: global.id,
@@ -626,6 +693,64 @@ export async function seedDatabase(prismaClient?: PrismaClient) {
       phone: '050-1111111',
     },
   });
+
+  // ─── 9. Orphan reports in PUBLIC tenant ──────────
+  // Demonstrates the adoption flow: citizen reports in cities that haven't
+  // joined yet (Haifa & Be'er Sheva) accumulate in the PUBLIC tenant and
+  // wait for those municipalities to claim them.
+  await prisma.serviceCategory.upsert({
+    where: { tenantId_name: { tenantId: publicTenant.id, name: 'בור בכביש' } },
+    update: {},
+    create: {
+      tenantId: publicTenant.id,
+      name: 'בור בכביש',
+      nameEn: 'Pothole',
+      nameAr: 'حفرة في الطريق',
+      icon: 'road',
+      color: '#EF4444',
+      sortOrder: 0,
+    },
+  });
+  const publicCategories = await prisma.serviceCategory.findMany({
+    where: { tenantId: publicTenant.id },
+    select: { id: true, name: true },
+  });
+  const publicPotholeCat = publicCategories.find((c) => c.name === 'בור בכביש');
+
+  if (publicPotholeCat) {
+    const orphanSeeds = [
+      { desc: 'בור גדול ברחוב הרצל בחיפה', addr: 'רחוב הרצל 5, חיפה', lat: 32.7950, lng: 34.9890, urgency: Urgency.HIGH },
+      { desc: 'מדרכה שבורה ליד בית הספר בבאר שבע', addr: 'רחוב רינגלבלום 10, באר שבע', lat: 31.2530, lng: 34.7910, urgency: Urgency.NORMAL },
+      { desc: 'עמוד תאורה כבוי כבר שבוע', addr: 'רחוב רוטשילד, חיפה', lat: 32.7900, lng: 34.9850, urgency: Urgency.NORMAL },
+      { desc: 'ערימת אשפה לא פונתה', addr: 'שכונה ב, באר שבע', lat: 31.2570, lng: 34.7950, urgency: Urgency.LOW },
+    ];
+
+    await prisma.issueReport.deleteMany({
+      where: { tenantId: publicTenant.id, isOrphaned: true },
+    });
+
+    for (const [i, s] of orphanSeeds.entries()) {
+      await prisma.issueReport.create({
+        data: {
+          tenantId: publicTenant.id,
+          originalTenantId: publicTenant.id,
+          reportNumber: `PUB-2026-${String(Date.now() % 100000 + i).padStart(5, '0')}`,
+          categoryId: publicPotholeCat.id,
+          description: s.desc,
+          address: s.addr,
+          latitude: s.lat,
+          longitude: s.lng,
+          urgency: s.urgency,
+          status: IssueStatus.NEW,
+          isOrphaned: true,
+          isAnonymous: true,
+          visibility: 'PUBLIC',
+          createdAt: new Date(Date.now() - Math.random() * 5 * 24 * 3600000),
+        },
+      });
+    }
+    console.log('✅ Orphan reports created:', orphanSeeds.length);
+  }
 
   console.log('\n🎉 Seed complete!\n');
   console.log('Global Admin: admin@cityfix.itninja.co.il / Admin123!');

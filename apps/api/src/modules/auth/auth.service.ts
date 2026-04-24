@@ -22,9 +22,9 @@ export class AuthService {
     lastName: string;
     phone?: string;
   }) {
-    // Check if user already exists in this tenant
+    // Email is now globally unique — one identity that can report anywhere.
     const existing = await this.prisma.user.findUnique({
-      where: { tenantId_email: { tenantId, email: dto.email } },
+      where: { email: dto.email },
     });
 
     if (existing) {
@@ -59,8 +59,10 @@ export class AuthService {
   }
 
   async login(tenantId: string, email: string, password: string) {
+    // Login is global — `tenantId` from the URL is informational only
+    // (kept for backward compat with the existing /:tenant/auth/login route).
     const user = await this.prisma.user.findUnique({
-      where: { tenantId_email: { tenantId, email } },
+      where: { email },
       select: {
         id: true,
         email: true,
@@ -137,8 +139,8 @@ export class AuthService {
    * Request password reset
    */
   async forgotPassword(dto: ForgotPasswordDto, tenantId: string): Promise<{ message: string }> {
-    const user = await this.prisma.user.findFirst({
-      where: { email: dto.email, tenantId },
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
     });
 
     const successMessage = { message: 'אם הכתובת קיימת במערכת, נשלח אליה קישור לאיפוס.' };
