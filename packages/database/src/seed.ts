@@ -29,6 +29,27 @@ export async function seedDatabase(prismaClient?: PrismaClient) {
     },
   });
 
+  const demoCity = await prisma.tenant.upsert({
+    where: { slug: 'demo' },
+    update: {},
+    create: {
+      name: 'עיריית דמו',
+      slug: 'demo',
+      primaryColor: '#14B8A6',
+      secondaryColor: '#0D9488',
+      contactEmail: 'info@demo.gov.il',
+      contactPhone: '106',
+      website: 'https://www.demo.gov.il',
+      population: 100000,
+      slaConfig: {
+        POTHOLE: { response: 4, resolution: 48 },
+        STREETLIGHT: { response: 2, resolution: 24 },
+        WASTE: { response: 1, resolution: 8 },
+        SAFETY: { response: 1, resolution: 4 },
+      },
+    },
+  });
+
   const haifa = await prisma.tenant.upsert({
     where: { slug: 'haifa' },
     update: {},
@@ -254,7 +275,7 @@ export async function seedDatabase(prismaClient?: PrismaClient) {
     },
   });
 
-  console.log('✅ Tenants created:', telAviv.slug, haifa.slug, kafrQasim.slug, roshHaayin.slug, jerusalem.slug, rishonLezion.slug, petahTikva.slug, ashdod.slug, netanya.slug, beersheba.slug, holon.slug, bneiBrak.slug, ramatGan.slug, ashkelon.slug, rehovot.slug, batYam.slug, beitShemesh.slug);
+  console.log('✅ Tenants created:', telAviv.slug, demoCity.slug, haifa.slug, kafrQasim.slug, roshHaayin.slug, jerusalem.slug, rishonLezion.slug, petahTikva.slug, ashdod.slug, netanya.slug, beersheba.slug, holon.slug, bneiBrak.slug, ramatGan.slug, ashkelon.slug, rehovot.slug, batYam.slug, beitShemesh.slug);
 
   // ─── 2. Departments (Tel Aviv) ───────────────────
   const departments = await Promise.all([
@@ -441,11 +462,116 @@ export async function seedDatabase(prismaClient?: PrismaClient) {
   await prisma.issueStatusHistory.createMany({ data: historyEntries });
 
   console.log('✅ Status history created');
+
+  // ─── 8. Demo City Seeding ──────────────────────────
+  console.log('\n🌱 Seeding Demo City...');
+  const demoDepartments = await Promise.all([
+    prisma.department.upsert({
+      where: { tenantId_name: { tenantId: demoCity.id, name: 'מחלקת כבישים' } },
+      update: {},
+      create: { tenantId: demoCity.id, name: 'מחלקת כבישים', color: '#EF4444', icon: 'road' },
+    }),
+    prisma.department.upsert({
+      where: { tenantId_name: { tenantId: demoCity.id, name: 'מחלקת חשמל' } },
+      update: {},
+      create: { tenantId: demoCity.id, name: 'מחלקת חשמל', color: '#F59E0B', icon: 'zap' },
+    }),
+    prisma.department.upsert({
+      where: { tenantId_name: { tenantId: demoCity.id, name: 'מחלקת ניקיון' } },
+      update: {},
+      create: { tenantId: demoCity.id, name: 'מחלקת ניקיון', color: '#10B981', icon: 'sparkles' },
+    }),
+  ]);
+
+  const demoCategories = await Promise.all(
+    categoryData.slice(0, 3).map((cat, i) =>
+      prisma.serviceCategory.upsert({
+        where: { tenantId_name: { tenantId: demoCity.id, name: cat.name } },
+        update: {},
+        create: {
+          tenantId: demoCity.id,
+          name: cat.name,
+          nameEn: cat.nameEn,
+          nameAr: cat.nameAr,
+          icon: cat.icon,
+          color: cat.color,
+          departmentId: demoDepartments[i].id,
+          slaHours: cat.sla,
+          sortOrder: i,
+        },
+      }),
+    ),
+  );
+
+  const demoAdmin = await prisma.user.upsert({
+    where: { tenantId_email: { tenantId: demoCity.id, email: 'admin@demo.gov.il' } },
+    update: {},
+    create: {
+      tenantId: demoCity.id,
+      email: 'admin@demo.gov.il',
+      firstName: 'מנהל',
+      lastName: 'דמו',
+      role: UserRole.ADMIN,
+      passwordHash,
+      phone: '050-0000000',
+    },
+  });
+
+  const demoCitizen = await prisma.user.upsert({
+    where: { tenantId_email: { tenantId: demoCity.id, email: 'citizen@demo.com' } },
+    update: {},
+    create: {
+      tenantId: demoCity.id,
+      email: 'citizen@demo.com',
+      firstName: 'אזרח',
+      lastName: 'דמו',
+      role: UserRole.RESIDENT,
+      passwordHash,
+      phone: '054-0000000',
+    },
+  });
+
+  await prisma.issueReport.deleteMany({
+    where: { tenantId: demoCity.id, reporterId: demoCitizen.id },
+  });
+
+  const demoIssues = await Promise.all(
+    issueSeeds.slice(0, 3).map((seed, i) =>
+      prisma.issueReport.create({
+        data: {
+          tenantId: demoCity.id,
+          reportNumber: `DEMO-2026-${String(Date.now() % 100000 + i).padStart(5, '0')}`,
+          categoryId: demoCategories[i].id,
+          description: seed.desc,
+          address: seed.addr,
+          latitude: seed.lat,
+          longitude: seed.lng,
+          urgency: seed.urgency,
+          status: seed.status,
+          reporterId: demoCitizen.id,
+          assignedDeptId: demoCategories[i].departmentId,
+          slaDeadline: new Date(Date.now() + (categoryData[i].sla * 3600000)),
+          resolvedAt: seed.status === IssueStatus.RESOLVED ? new Date() : null,
+          createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 3600000),
+        },
+      }),
+    ),
+  );
+
+  await prisma.issueComment.createMany({
+    data: [
+      { issueId: demoIssues[0].id, authorId: demoAdmin.id, content: 'פניית דמו התקבלה', isSystemNote: true },
+    ],
+  });
+
   console.log('\n🎉 Seed complete!\n');
-  console.log('Demo accounts:');
+  console.log('Demo accounts (Tel Aviv):');
   console.log('  Admin:    admin@tel-aviv.gov.il / Admin123!');
   console.log('  Manager:  roads@tel-aviv.gov.il / Admin123!');
   console.log('  Citizen:  citizen@example.com   / Admin123!');
+  console.log('\nDemo accounts (Demo City):');
+  console.log('  Admin:    admin@demo.gov.il     / Admin123!');
+  console.log('  Citizen:  citizen@demo.com      / Admin123!');
 }
 
 if (require.main === module) {
